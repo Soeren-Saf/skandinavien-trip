@@ -103,6 +103,44 @@
   .votesum{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-left:auto}
   .votechip{font-size:.68rem;font-weight:700;color:#0f1720;border-radius:9px;padding:1px 7px;white-space:nowrap}
   .voteavg{font-size:.74rem;font-weight:700;color:#f6c945;white-space:nowrap}
+  .autodist{color:#7fa6c7;font-size:.8rem}
+  /* Budget */
+  .budsum{margin-bottom:12px}
+  .budtotals{font-size:.95rem;margin-bottom:8px}
+  .budpaid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .budchip{font-size:.74rem;font-weight:700;color:#0f1720;border-radius:10px;padding:2px 9px;white-space:nowrap}
+  .budsettle{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:.88rem;line-height:1.6}
+  .exprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);
+    border-radius:9px;padding:6px 9px;margin-bottom:6px}
+  .expdesc{flex:1;min-width:120px;font-size:.9rem;cursor:text;border-radius:4px;padding:1px 4px}
+  .expdesc:focus{background:rgba(79,209,197,.10);box-shadow:0 0 0 1px var(--accent)}
+  .expamt{width:84px;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:4px 7px;font-size:.85rem;font-family:inherit;text-align:right}
+  .expamt:focus{outline:none;border-color:var(--accent)}
+  .expeur{color:var(--muted);font-size:.85rem}
+  .expwho{border:1px solid var(--line);border-radius:9px;padding:3px 8px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .expwho option{background:var(--panel);color:var(--text)}
+  .addexp{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .addexp input[type=text]{flex:1;min-width:140px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
+  .addexp input[type=number]{width:90px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
+  .addexp input:focus{outline:none;border-color:var(--accent)}
+  .addexp select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
+  .addexp button{background:var(--accent);border:none;color:#0f1720;font-weight:700;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:.88rem}
+  /* Helles Theme */
+  body.light{ --bg:#f3f6fa; --panel:#ffffff; --panel2:#eef2f7; --line:#d3dde7;
+    --text:#1a2733; --muted:#5a6b7b; }
+  body.light header{background:linear-gradient(160deg,#e7eef6,#f3f6fa);border-bottom-color:#d3dde7}
+  body.light .chip.active,body.light .who button.on{color:#0f1720}
+  body.light .voteavg{color:#b8860b}
+  body.light .star.on,body.light .star:hover{color:#e0a800}
+  /* Hell/Dunkel-Schalter */
+  .themeToggle{position:relative;width:60px;height:28px;border-radius:20px;border:1px solid var(--line);
+    background:linear-gradient(180deg,#1c2b3a,#141f2b);cursor:pointer;padding:0;flex:none;transition:background .25s}
+  .themeToggle .tknob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
+    background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;
+    transition:left .25s ease, background .25s;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .themeToggle:hover{border-color:var(--accent)}
+  body.light .themeToggle{background:linear-gradient(180deg,#dbe6ef,#c7d6e3)}
+  body.light .themeToggle .tknob{left:34px;background:#f6c945}
   .droute{font-weight:700;font-size:1.05rem;margin:2px 0}
   .ddist{font-size:.82rem;color:var(--accent2)}
   .ddesc{color:var(--muted);font-size:.9rem;margin:6px 0 10px}
@@ -175,10 +213,10 @@
     <h1 id="tripTitle" contenteditable="true" spellcheck="false" title="Klicken zum Umbenennen">🚗 Nordkap Roadtrip 2026</h1>
     <div class="sub">Sören · Flo · Sarah — eigenes Auto · Wörgl → Skandinavien → Wörgl</div>
     <div class="stats">
-      <div class="stat"><div class="k">15. Aug – 9. Sep</div><div class="l">26 Tage</div></div>
-      <div class="stat"><div class="k">~8.500 km</div><div class="l">Fahrstrecke</div></div>
+      <div class="stat"><div class="k" id="statDays">26 Tage</div><div class="l">15. Aug – 9. Sep</div></div>
+      <div class="stat"><div class="k" id="statKm">≈ — km</div><div class="l">Fahrstrecke (geschätzt)</div></div>
+      <div class="stat"><div class="k" id="statDrive">≈ — h</div><div class="l">Reine Fahrzeit</div></div>
       <div class="stat"><div class="k">7 Länder</div><div class="l">AT·DE·DK·NO·FI·SE·PL</div></div>
-      <div class="stat"><div class="k">71°N</div><div class="l">Nordkap</div></div>
     </div>
   </div>
 </header>
@@ -193,6 +231,7 @@
       <button data-name="Flo">Flo</button>
       <button data-name="Sarah">Sarah</button>
     </div>
+    <button class="themeToggle" id="themeBtn" onclick="toggleTheme()" role="switch" title="Hell/Dunkel umschalten" aria-label="Hell/Dunkel umschalten"><span class="tknob">🌙</span></button>
     <button class="btn" id="syncBtn" onclick="setupSync()" title="Live-Sync über Google Sheet einrichten">🔗 Sync einrichten</button>
     <span class="sub" id="syncStatus" style="font-size:.8rem;font-weight:600">nur lokal</span>
     <button class="btn" onclick="exportData()" title="Plan als Datei sichern/teilen">⬇ Export</button>
@@ -214,6 +253,19 @@
     <div class="additem">
       <input type="text" id="packinput" placeholder="Etwas zur Packliste hinzufügen…" onkeydown="if(event.key==='Enter')addPack()">
       <button onclick="addPack()">+ Hinzufügen</button>
+    </div>
+  </div>
+
+  <h2 class="section-h">💶 Budget & Kostenteilung</h2>
+  <div class="section-sub">Wer hat was bezahlt? Die App teilt fair auf und zeigt, wer wem noch was schuldet.</div>
+  <div class="pack-card">
+    <div id="budgetSummary" class="budsum"></div>
+    <div id="expenseList"></div>
+    <div class="addexp">
+      <input type="text" id="expDesc" placeholder="Wofür? (z. B. Tanken, Fähre)">
+      <input type="number" id="expAmt" placeholder="€" step="0.01" min="0">
+      <select id="expPayer" title="Wer hat bezahlt?"></select>
+      <button onclick="addExpense()">+ Ausgabe</button>
     </div>
   </div>
 </div>
@@ -361,6 +413,7 @@ if(!state || !state.plan){
 }
 state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.stays=d.stays||[]; d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
 state.pack.forEach(p=>{ if(p.ts==null)p.ts=1; });
+state.expenses=state.expenses||[]; state.expenses.forEach(x=>{ if(x.ts==null)x.ts=1; });
 
 // ---------- Merge (mehrere Geräte zusammenführen, neuere Änderung gewinnt) ----------
 function newer(a,b){ return (a.ts||0)>=(b.ts||0)?a:b; }
@@ -387,13 +440,14 @@ function mergeState(a,b){
     title:(a.titleTs||0)>=(b.titleTs||0)?a.title:b.title,
     titleTs:Math.max(a.titleTs||0,b.titleTs||0),
     plan:mergeArr(a.plan,b.plan,mergeDay),
-    pack:mergeArr(a.pack,b.pack,mergePack)
+    pack:mergeArr(a.pack,b.pack,mergePack),
+    expenses:mergeArr(a.expenses||[],b.expenses||[],newer)
   };
 }
 
 // ---------- Live-Sync (Google Apps Script Web-App) ----------
 let syncing=false, syncTimer=null, pollStarted=false;
-function syncedPart(){ return {title:state.title,titleTs:state.titleTs,plan:state.plan,pack:state.pack}; }
+function syncedPart(){ return {title:state.title,titleTs:state.titleTs,plan:state.plan,pack:state.pack,expenses:state.expenses}; }
 function scheduleSync(){ if(!API)return; clearTimeout(syncTimer); syncTimer=setTimeout(syncNow,900); }
 function isEditing(){ const a=document.activeElement; return !!(a && (a.isContentEditable || a.tagName==='INPUT')); }
 async function syncNow(){
@@ -403,10 +457,10 @@ async function syncNow(){
     const r=await fetch(API,{method:'GET'}); const t=(await r.text()).trim();
     if(t && t!=='null') remote=JSON.parse(t);
     const merged = remote ? mergeState(syncedPart(),remote) : syncedPart();
-    state.title=merged.title; state.titleTs=merged.titleTs; state.plan=merged.plan; state.pack=merged.pack;
+    state.title=merged.title; state.titleTs=merged.titleTs; state.plan=merged.plan; state.pack=merged.pack; state.expenses=merged.expenses||[];
     saveLocal();
     if(JSON.stringify(merged)!==JSON.stringify(remote)) await fetch(API,{method:'POST',body:JSON.stringify(merged)});
-    if(!isEditing()){ paintTitle(); renderDays(); renderPack(); }
+    if(!isEditing()){ paintTitle(); renderDays(); renderPack(); renderBudget(); }
     setSyncStatus('ok');
   }catch(e){ setSyncStatus('off'); }
   syncing=false;
@@ -486,6 +540,25 @@ g.appendChild(routeLayer);
 const mapNodes={};
 function defLL(num){const dd=DAYS.find(x=>x.n===num);return dd?dd.ll:null;}
 function coordsOf(d){ if(typeof d.lat==='number' && typeof d.lon==='number') return [d.lat,d.lon]; return defLL(d.num); }
+function haversine(a,b){ const R=6371,r=Math.PI/180;
+  const dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r, la1=a[0]*r, la2=b[0]*r;
+  const h=Math.sin(dLa/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h)); }
+const ROADFAC=1.3, AVGKMH=75;   // Luftlinie→Straße ~1,3x, Schnitt 75 km/h
+function tripLegs(){ // {legKm:{num:km}, totalKm}
+  const days=state.plan.filter(d=>!d.deleted && coordsOf(d)).sort((a,b)=>(a.num||0)-(b.num||0));
+  const legKm={}; let total=0;
+  for(let i=1;i<days.length;i++){ const km=haversine(coordsOf(days[i-1]),coordsOf(days[i]))*ROADFAC; legKm[days[i].num]=km; total+=km; }
+  return {legKm, totalKm:total};
+}
+function fmtKm(km){ return Math.round(km).toLocaleString('de-DE')+' km'; }
+function fmtH(km){ const h=km/AVGKMH; const H=Math.floor(h), M=Math.round((h-H)*60); return H+' h '+(M<10?'0':'')+M+' min'; }
+function updateStats(){
+  const t=tripLegs();
+  const km=document.getElementById('statKm'); if(km) km.textContent='≈ '+fmtKm(t.totalKm);
+  const dr=document.getElementById('statDrive'); if(dr) dr.textContent='≈ '+fmtH(t.totalKm);
+  const dc=document.getElementById('statDays'); if(dc) dc.textContent=state.plan.filter(d=>!d.deleted).length+' Tage';
+}
 function parseGeo(s){
   if(!s)return null;
   let m=s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/); if(m)return {lat:+m[1],lon:+m[2]};
@@ -633,6 +706,7 @@ function mkEditable(text,cls,onSave,ph){
 function renderDays(){
   dayWrap.innerHTML='';
   const plan=state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0));
+  const legKm=tripLegs().legKm;
   plan.forEach(d=>{
     if(activeFilter!=='all' && activeFilter!==d.phase) return;
     const ph=PHASES[d.phase]; const col=ph?ph.color:'#7a8aa0';
@@ -669,6 +743,8 @@ function renderDays(){
     const meta=document.createElement('div');meta.className='dmeta-ed';
     meta.appendChild(document.createTextNode('📍 '));
     meta.appendChild(mkEditable(d.dist,'ddist-ed',v=>{d.dist=v;d.ts=now();save();},'Distanz / Fahrzeit'));
+    if(legKm[d.num]){const auto=document.createElement('span');auto.className='autodist';
+      auto.textContent=' · 🚗 ≈ '+fmtKm(legKm[d.num])+' · '+fmtH(legKm[d.num]);meta.appendChild(auto);}
     div.appendChild(meta);
     div.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
 
@@ -717,7 +793,7 @@ function renderDays(){
         setTimeout(()=>{const e=document.getElementById('sub-'+ns.id);e&&e.focus();},0);};
       li.appendChild(subB);
       const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Eintrag löschen';
-      del.onclick=()=>{it.deleted=true;it.ts=now();save();renderDays();};
+      del.onclick=()=>{ if(confirm('Eintrag „'+(it.text||'')+'" löschen?')){ it.deleted=true;it.ts=now();save();renderDays(); } };
       li.appendChild(del);
       ul.appendChild(li);
       it.subs.filter(su=>!su.deleted).forEach(su=>{
@@ -728,7 +804,7 @@ function renderDays(){
         stxt.id='sub-'+su.id;sli.appendChild(stxt);
         sli.appendChild(badgeEl(su.author));
         const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Unterpunkt löschen';
-        sdel.onclick=()=>{su.deleted=true;su.ts=now();save();renderDays();};
+        sdel.onclick=()=>{ if(confirm('Unterpunkt löschen?')){ su.deleted=true;su.ts=now();save();renderDays(); } };
         sli.appendChild(sdel);
         ul.appendChild(sli);
       });
@@ -756,7 +832,7 @@ function renderDays(){
       r1.appendChild(mkEditable(s.name,'stayname',v=>{s.name=v;s.ts=now();save();},'Name / Campingplatz…'));
       r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();},'Preis €'));
       const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Option löschen';
-      sdel.onclick=()=>{s.deleted=true;s.ts=now();save();renderDays();};
+      sdel.onclick=()=>{ if(confirm('Übernachtungs-Option „'+(s.name||'')+'" löschen?')){ s.deleted=true;s.ts=now();save();renderDays(); } };
       r1.appendChild(sdel);card.appendChild(r1);
       const r2=document.createElement('div');r2.className='stayrow';
       const linkIn=document.createElement('input');linkIn.type='text';linkIn.className='staylink';linkIn.value=s.url||'';linkIn.placeholder='Link (https://…)';
@@ -798,6 +874,7 @@ function renderDays(){
     dayWrap.appendChild(div);
   });
   renderMap();
+  updateStats();
 }
 function addDay(){
   const maxNum=state.plan.reduce((m,d)=>Math.max(m,d.num||0),0);
@@ -823,6 +900,60 @@ function addPack(){
   inp.value='';save();renderPack();inp.focus();
 }
 
+// ---------- Budget & Kostenteilung ----------
+const TRIO=['Sören','Flo','Sarah'];
+function renderBudget(){
+  const payerSel=document.getElementById('expPayer');
+  if(payerSel && !payerSel.options.length){ TRIO.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;payerSel.appendChild(o);}); payerSel.value=ME; }
+  const list=document.getElementById('expenseList'); if(!list)return;
+  list.innerHTML='';
+  const exp=state.expenses.filter(e=>!e.deleted);
+  exp.forEach(e=>{
+    const row=document.createElement('div');row.className='exprow';
+    row.appendChild(mkEditable(e.desc,'expdesc',v=>{e.desc=v;e.ts=now();save();},'Beschreibung…'));
+    const amt=document.createElement('input');amt.type='number';amt.className='expamt';amt.value=(e.amount!=null?e.amount:'');amt.step='0.01';amt.min='0';
+    amt.onchange=()=>{e.amount=parseFloat(amt.value)||0;e.ts=now();save();renderBudget();};
+    row.appendChild(amt);
+    const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';row.appendChild(eur);
+    const who=document.createElement('select');who.className='expwho';
+    TRIO.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(e.payer===p)o.selected=true;who.appendChild(o);});
+    who.style.background=PEOPLE[e.payer]||'var(--panel2)';who.style.color=PEOPLE[e.payer]?'#0f1720':'var(--text)';
+    who.onchange=()=>{e.payer=who.value;e.ts=now();save();renderBudget();};
+    row.appendChild(who);
+    const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Ausgabe löschen';
+    del.onclick=()=>{ if(confirm('Ausgabe „'+(e.desc||'')+'" löschen?')){ e.deleted=true;e.ts=now();save();renderBudget(); } };
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+  const sum=document.getElementById('budgetSummary');
+  const total=exp.reduce((a,e)=>a+(+e.amount||0),0);
+  const share=total/TRIO.length;
+  const paid={}; TRIO.forEach(p=>paid[p]=0);
+  exp.forEach(e=>{ if(e.payer && paid[e.payer]!=null) paid[e.payer]+=(+e.amount||0); });
+  const net={}; TRIO.forEach(p=>net[p]=paid[p]-share);
+  const debt=TRIO.filter(p=>net[p]<-0.005).map(p=>({p,v:-net[p]}));
+  const cred=TRIO.filter(p=>net[p]>0.005).map(p=>({p,v:net[p]}));
+  const settle=[]; let i=0,j=0;
+  while(i<debt.length && j<cred.length){
+    const m=Math.min(debt[i].v,cred[j].v);
+    settle.push(debt[i].p+' → '+cred[j].p+': '+m.toFixed(2)+' €');
+    debt[i].v-=m; cred[j].v-=m;
+    if(debt[i].v<0.005)i++; if(cred[j].v<0.005)j++;
+  }
+  let html='<div class="budtotals"><b>Gesamt:</b> '+total.toFixed(2)+' €  ·  <b>pro Person:</b> '+share.toFixed(2)+' €</div>';
+  html+='<div class="budpaid">'+TRIO.map(p=>'<span class="budchip" style="background:'+PEOPLE[p]+'">'+p+': '+paid[p].toFixed(2)+' €</span>').join('')+'</div>';
+  if(settle.length){ html+='<div class="budsettle"><b>Ausgleich:</b><br>'+settle.join('<br>')+'</div>'; }
+  else if(total>0){ html+='<div class="budsettle">Alles ausgeglichen ✓</div>'; }
+  sum.innerHTML=html;
+}
+function addExpense(){
+  const desc=document.getElementById('expDesc'), amt=document.getElementById('expAmt'), payer=document.getElementById('expPayer');
+  const d=desc.value.trim(), a=parseFloat(amt.value);
+  if(!d || !(a>0)){ alert('Bitte Beschreibung und Betrag (€) eingeben.'); return; }
+  state.expenses.push({id:uid(),ts:now(),desc:d,amount:a,payer:(payer&&payer.value)||ME});
+  desc.value='';amt.value='';save();renderBudget();desc.focus();
+}
+
 // ---------- Export / Import (Backup & manuelles Zusammenführen) ----------
 function exportData(){
   const blob=new Blob([JSON.stringify(syncedPart(),null,2)],{type:'application/json'});
@@ -834,9 +965,9 @@ function importData(input){
   const r=new FileReader();
   r.onload=()=>{try{
     const inc=JSON.parse(r.result);
-    const m=mergeState(syncedPart(),{title:inc.title||state.title,titleTs:inc.titleTs||1,plan:inc.plan||[],pack:inc.pack||[]});
-    state.title=m.title;state.titleTs=m.titleTs;state.plan=m.plan;state.pack=m.pack;
-    save();paintTitle();renderDays();renderPack();
+    const m=mergeState(syncedPart(),{title:inc.title||state.title,titleTs:inc.titleTs||1,plan:inc.plan||[],pack:inc.pack||[],expenses:inc.expenses||[]});
+    state.title=m.title;state.titleTs=m.titleTs;state.plan=m.plan;state.pack=m.pack;state.expenses=m.expenses||[];
+    save();paintTitle();renderDays();renderPack();renderBudget();
     alert('Listen erfolgreich zusammengeführt ✓');
   }catch(err){alert('Datei konnte nicht gelesen werden.');}
   input.value='';};
@@ -850,9 +981,17 @@ paintTitle();
 titleEl.addEventListener('blur',()=>{state.title=titleEl.textContent.trim()||state.title;state.titleTs=now();save();});
 titleEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();titleEl.blur();}});
 
+// ---------- Theme (hell/dunkel) ----------
+function applyTheme(t){ const light=(t==='light'); document.body.classList.toggle('light', light);
+  const k=document.querySelector('#themeBtn .tknob'); if(k) k.textContent = light ? '☀️' : '🌙'; }
+function toggleTheme(){ const t=document.body.classList.contains('light')?'dark':'light';
+  localStorage.setItem('nordkap_theme',t); applyTheme(t); }
+applyTheme(localStorage.getItem('nordkap_theme')||'dark');
+
 // ---------- Init ----------
 renderDays();
 renderPack();
+renderBudget();
 paintSyncUI();
 if(API){ syncNow(); ensurePoll(); }
 </script>
