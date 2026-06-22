@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nordkap Roadtrip 2026 · Sören, Flo & Sarah</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#172230; --panel2:#1e2c3d; --line:#2a3a4d;
+    --text:#e7eef6; --muted:#9fb1c4; --accent:#4fd1c5; --accent2:#f6ad55;
+    --p1:#4fd1c5; --p2:#63b3ed; --p3:#9f7aea; --p4:#f56565; --p5:#48bb78; --p6:#ed8936;
+    --soeren:#4fd1c5; --flo:#63b3ed; --sarah:#f6ad55;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5}
+  header{padding:28px 20px 18px;background:linear-gradient(160deg,#13202e,#0f1720);border-bottom:1px solid var(--line)}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+  h1{margin:0 0 4px;font-size:1.7rem;letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:.95rem}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px}
+  .stat .k{font-size:1.25rem;font-weight:700}
+  .stat .l{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+  #map{position:relative;height:480px;width:100%;border-radius:14px;margin:18px 0;border:1px solid var(--line);
+    overflow:hidden;background:radial-gradient(circle at 50% 30%,#13283a,#0b1118)}
+  #map svg{display:block;width:100%;height:100%;cursor:grab}
+  #map svg.drag{cursor:grabbing}
+  .node{cursor:pointer}
+  .node circle{transition:r .15s}
+  .node:hover circle.dot{r:11}
+  .node.pulse circle.ring{animation:pulse 1.4s ease-out 2}
+  @keyframes pulse{0%{r:9;opacity:.9}100%{r:26;opacity:0}}
+  .mzoom{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  .mzoom button{width:34px;height:34px;font-size:1.2rem;border-radius:8px;border:1px solid var(--line);
+    background:rgba(20,32,46,.92);color:var(--text);cursor:pointer}
+  .mzoom button:hover{border-color:var(--accent)}
+  .mlegend{position:absolute;left:12px;top:12px;z-index:5;background:rgba(15,23,32,.82);border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;font-size:.72rem;color:var(--muted);max-width:160px}
+  .mlegend b{color:var(--text);display:block;margin-bottom:4px;font-size:.78rem}
+  .mlegend span{display:flex;align-items:center;gap:6px;margin:2px 0}
+  .mlegend i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+  .mtip{position:absolute;pointer-events:none;background:#0f1720;border:1px solid var(--accent);
+    border-radius:8px;padding:6px 9px;font-size:.78rem;color:var(--text);z-index:6;opacity:0;transition:opacity .12s;white-space:nowrap}
+
+  /* Toolbar / Identität */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 14px}
+  .who{display:flex;gap:6px;align-items:center}
+  .who .lbl{font-size:.85rem;color:var(--muted)}
+  .who button{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:20px;
+    padding:5px 13px;font-size:.85rem;cursor:pointer;font-weight:600}
+  .who button.on{color:#0f1720}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;
+    padding:7px 13px;font-size:.82rem;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+
+  .phasebar{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 18px}
+  .chip{font-size:.78rem;padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--panel);
+    color:var(--muted);cursor:pointer;user-select:none}
+  .chip.active{color:#0f1720;font-weight:700}
+
+  .section-h{margin:34px 0 4px;font-size:1.3rem}
+  .section-sub{color:var(--muted);font-size:.9rem;margin-bottom:14px}
+
+  .day{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--accent);
+    border-radius:12px;padding:14px 16px;margin-bottom:12px;transition:box-shadow .2s,transform .2s;scroll-margin-top:14px}
+  .day.flash{box-shadow:0 0 0 2px var(--accent),0 6px 24px rgba(79,209,197,.25);transform:translateX(2px)}
+  .day.hide{display:none}
+  .ddate{font-size:.8rem;color:var(--muted)}
+  .dtag{font-size:.7rem;padding:2px 8px;border-radius:10px;color:#0f1720;font-weight:700;white-space:nowrap}
+  .droute{font-weight:700;font-size:1.05rem;margin:2px 0}
+  .ddist{font-size:.82rem;color:var(--accent2)}
+  .ddesc{color:var(--muted);font-size:.9rem;margin:6px 0 10px}
+  .mapbtn{background:transparent;border:1px solid var(--line);color:var(--accent);
+    border-radius:8px;padding:4px 10px;font-size:.78rem;cursor:pointer;margin-left:8px}
+  .mapbtn:hover{border-color:var(--accent)}
+
+  /* Listen-Items */
+  .items{list-style:none;margin:4px 0 8px;padding:0}
+  .item{display:flex;align-items:flex-start;gap:9px;padding:6px 8px;border-radius:8px;background:var(--panel2);
+    margin-bottom:6px;border:1px solid var(--line)}
+  .item.checked .txt{text-decoration:line-through;opacity:.5}
+  .item input[type=checkbox]{margin-top:3px;width:17px;height:17px;accent-color:var(--accent);flex:none}
+  .item .txt{flex:1;font-size:.92rem;word-break:break-word}
+  .author{font-size:.68rem;padding:1px 7px;border-radius:10px;color:#0f1720;font-weight:700;white-space:nowrap;align-self:center}
+  .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 4px;flex:none}
+  .del:hover{color:var(--p4)}
+  .additem{display:flex;gap:7px;margin-top:6px}
+  .additem input[type=text]{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
+  .additem input[type=text]:focus{outline:none;border-color:var(--accent)}
+  .additem button{background:var(--accent);border:none;color:#0f1720;font-weight:700;border-radius:8px;
+    padding:7px 14px;cursor:pointer;font-size:.88rem}
+
+  /* Editierbarer Planer */
+  #tripTitle{outline:none;border-radius:6px;padding:0 4px;margin-left:-4px}
+  #tripTitle:focus{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px var(--accent)}
+  .planbar{margin:0 0 14px}
+  .adddaybtn{background:var(--accent);border:none;color:#0f1720;font-weight:700;border-radius:8px;
+    padding:8px 16px;cursor:pointer;font-size:.9rem}
+  .adddaybtn:hover{filter:brightness(1.08)}
+  .dhead2{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .dhead-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+  .dnum{font-weight:700;color:var(--text)}
+  .numin{width:46px;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:6px;padding:2px 5px;font-size:.82rem;font-weight:700;font-family:inherit}
+  .dctrls{display:flex;gap:6px;flex:none}
+  .delday{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:4px 10px;font-size:.78rem;cursor:pointer}
+  .delday:hover{border-color:var(--p4);color:var(--p4)}
+  /* contenteditable Felder */
+  [contenteditable]{outline:none}
+  .ddate-ed{color:var(--muted);border-bottom:1px dashed transparent;border-radius:4px;padding:0 3px;cursor:text}
+  .droute-ed{display:block;font-weight:700;font-size:1.05rem;margin:6px 0 2px;border-radius:6px;padding:2px 4px;cursor:text}
+  .dmeta-ed{font-size:.82rem;color:var(--accent2);margin-top:2px}
+  .ddist-ed{cursor:text;border-radius:4px;padding:0 3px}
+  .ddesc-ed{display:block;color:var(--muted);font-size:.9rem;margin:4px 0 10px;border-radius:6px;padding:2px 4px;cursor:text}
+  .ddate-ed:focus,.droute-ed:focus,.ddist-ed:focus,.ddesc-ed:focus,.txt-ed:focus{background:rgba(79,209,197,.10);box-shadow:0 0 0 1px var(--accent)}
+  [data-ph]:empty:before{content:attr(data-ph);color:#5d6f82;font-weight:400}
+  .txt-ed{flex:1;font-size:.92rem;word-break:break-word;cursor:text;border-radius:4px;padding:0 3px}
+  .item.checked .txt-ed{text-decoration:line-through;opacity:.5}
+  .subbtn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;
+    padding:2px 8px;font-size:.72rem;cursor:pointer;flex:none;align-self:center}
+  .subbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .subitem{display:flex;align-items:flex-start;gap:9px;padding:5px 8px;border-radius:8px;background:var(--panel);
+    margin:0 0 6px 26px;border:1px solid var(--line);border-left:3px solid var(--p3)}
+  .subitem input[type=checkbox]{margin-top:3px;width:15px;height:15px;accent-color:var(--p3);flex:none}
+  .subitem.checked .txt-ed{text-decoration:line-through;opacity:.5}
+
+  .pack-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:40px}
+  .count{font-size:.78rem;color:var(--muted);margin-left:6px}
+  footer{color:var(--muted);font-size:.8rem;text-align:center;padding:10px 16px 50px}
+  a{color:var(--accent)}
+  @media(max-width:680px){#map{height:340px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1 id="tripTitle" contenteditable="true" spellcheck="false" title="Klicken zum Umbenennen">🚗 Nordkap Roadtrip 2026</h1>
+    <div class="sub">Sören · Flo · Sarah — eigenes Auto · Wörgl → Skandinavien → Wörgl</div>
+    <div class="stats">
+      <div class="stat"><div class="k">15. Aug – 9. Sep</div><div class="l">26 Tage</div></div>
+      <div class="stat"><div class="k">~8.500 km</div><div class="l">Fahrstrecke</div></div>
+      <div class="stat"><div class="k">7 Länder</div><div class="l">AT·DE·DK·NO·FI·SE·PL</div></div>
+      <div class="stat"><div class="k">71°N</div><div class="l">Nordkap</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="map"></div>
+
+  <div class="toolbar">
+    <div class="who">
+      <span class="lbl">Ich bin:</span>
+      <button data-name="Sören">Sören</button>
+      <button data-name="Flo">Flo</button>
+      <button data-name="Sarah">Sarah</button>
+    </div>
+    <button class="btn" id="syncBtn" onclick="setupSync()" title="Live-Sync über Google Sheet einrichten">🔗 Sync einrichten</button>
+    <span class="sub" id="syncStatus" style="font-size:.8rem;font-weight:600">nur lokal</span>
+    <button class="btn" onclick="exportData()" title="Plan als Datei sichern/teilen">⬇ Export</button>
+    <label class="btn" style="cursor:pointer">⬆ Import<input type="file" accept="application/json" style="display:none" onchange="importData(this)"></label>
+  </div>
+
+  <h2 class="section-h">🗺 Tagesplaner — was machen wir wo?</h2>
+  <div class="section-sub">Alles editierbar: auf Titel, Datum oder Einträge klicken zum Ändern. Tage hinzufügen/löschen, Unterpunkte ergänzen — sortiert automatisch nach Tag-Nummer. Filter nach Reisephase:</div>
+  <div class="phasebar" id="phasebar"></div>
+  <div class="planbar">
+    <button class="adddaybtn" onclick="addDay()">＋ Tag hinzufügen</button>
+  </div>
+  <div id="days"></div>
+
+  <h2 class="section-h">🎒 Packliste</h2>
+  <div class="section-sub">Gemeinsame Liste — jeder trägt ein, was er braucht oder mitbringt.</div>
+  <div class="pack-card">
+    <ul class="items" id="packlist"></ul>
+    <div class="additem">
+      <input type="text" id="packinput" placeholder="Etwas zur Packliste hinzufügen…" onkeydown="if(event.key==='Enter')addPack()">
+      <button onclick="addPack()">+ Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
+  Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.
+</footer>
+
+<script>
+const PHASES = {
+  p1:{name:"Anreise",color:"#4fd1c5"},
+  p2:{name:"Südfjorde",color:"#63b3ed"},
+  p3:{name:"Lofoten",color:"#9f7aea"},
+  p4:{name:"Nordkap",color:"#f56565"},
+  p5:{name:"Finnland/Schweden",color:"#48bb78"},
+  p6:{name:"Fähre & Heimreise",color:"#ed8936"}
+};
+const PEOPLE = {"Sören":"#4fd1c5","Flo":"#63b3ed","Sarah":"#f6ad55","Vorschlag":"#7a8aa0"};
+
+const DAYS = [
+  {n:1,date:"Sa 15. Aug",phase:"p1",route:"Wörgl → Hamburg/Lübeck",dist:"~920 km · 9 h",
+   desc:"Früher Start! Lange Etappe Richtung Norden, Übernachtung im Großraum Hamburg/Lübeck.",
+   hl:["Frühstart einplanen"],ll:[53.55,9.99]},
+  {n:2,date:"So 16. Aug",phase:"p1",route:"→ Kopenhagen (Pause) → Oslo",dist:"~865 km · 10 h",
+   desc:"Über die Øresundbrücke, Mittagspause in Kopenhagen, dann weiter nach Oslo.",
+   hl:["Spaziergang Nyhavn Kopenhagen","Øresundbrücke"],ll:[59.91,10.75]},
+  {n:3,date:"Mo 17. Aug",phase:"p2",route:"Oslo → Hardangerfjord (Odda)",dist:"~360 km · 6 h",
+   desc:"Über die Hardangervidda-Hochebene zum ersten großen Fjord.",
+   hl:["Vøringsfossen Wasserfall","Trolltunga-Wanderung (anspruchsvoll, ganztägig)"],ll:[60.07,6.55]},
+  {n:4,date:"Di 18. Aug",phase:"p2",route:"Odda → Bergen",dist:"~150 km · 3 h",
+   desc:"Entspannte Etappe entlang des Hardangerfjords nach Bergen.",
+   hl:["Bryggen (UNESCO)","Fløyen-Standseilbahn","Fischmarkt"],ll:[60.39,5.32]},
+  {n:5,date:"Mi 19. Aug",phase:"p2",route:"Bergen → Flåm / Nærøyfjord",dist:"~165 km · 3 h",
+   desc:"Zum spektakulären Nærøyfjord (UNESCO).",
+   hl:["Flåmsbahn fahren","Fjordkreuzfahrt Gudvangen","Stegastein-Aussicht"],ll:[60.86,7.11]},
+  {n:6,date:"Do 20. Aug",phase:"p2",route:"Flåm → Geirangerfjord",dist:"~230 km · 5 h",
+   desc:"Über Fähren und Pässe zum berühmtesten Fjord Norwegens.",
+   hl:["Sieben-Schwestern-Wasserfall","Dalsnibba-Aussicht","Adlerkehre Ørnesvingen"],ll:[62.10,7.21]},
+  {n:7,date:"Fr 21. Aug",phase:"p2",route:"Geiranger → Åndalsnes (Trollstigen)",dist:"~100 km · 2,5 h",
+   desc:"Eine der schönsten Strecken: Trollstigen-Serpentinen, viel Zeit für Stopps.",
+   hl:["Trollstigen-Aussichtsplattform","Trollveggen-Wand","Wanderung Romsdalseggen"],ll:[62.57,7.69]},
+  {n:8,date:"Sa 22. Aug",phase:"p3",route:"Åndalsnes → Trondheim",dist:"~270 km · 4 h",
+   desc:"Nordwärts in die Wikingerstadt Trondheim.",
+   hl:["Nidarosdom","Bummel Bakklandet"],ll:[63.43,10.39]},
+  {n:9,date:"So 23. Aug",phase:"p3",route:"Trondheim → Mo i Rana",dist:"~450 km · 6 h",
+   desc:"Lange Nordetappe entlang der E6.",
+   hl:["Fotostopp E6-Küste"],ll:[66.31,14.14]},
+  {n:10,date:"Mo 24. Aug",phase:"p3",route:"Polarkreis → Bodø → Fähre Lofoten",dist:"~230 km + Fähre 3,5 h",
+   desc:"Polarkreiszentrum, weiter nach Bodø, Auto-Fähre nach Moskenes (reservieren!).",
+   hl:["Polarkreiszentrum (66°33'N)","Saltstraumen-Gezeitenstrudel","Fähre Bodø→Moskenes buchen"],ll:[67.93,13.09]},
+  {n:11,date:"Di 25. Aug",phase:"p3",route:"Lofoten: Reine & Hamnøy",dist:"~60 km lokal",
+   desc:"Das Postkarten-Lofoten: rote Rorbuer, Granitgipfel, weiße Strände.",
+   hl:["Wanderung Reinebringen (steil)","Hamnøy Fotospot","Kvalvika-Strand"],ll:[67.93,13.09]},
+  {n:12,date:"Mi 26. Aug",phase:"p3",route:"Lofoten: Henningsvær & Svolvær",dist:"~130 km",
+   desc:"Fischerdörfer und Künstlerorte, Abend in Svolvær.",
+   hl:["Henningsvær Fußballplatz","Svolvær Hafen","Kabelvåg Altstadt"],ll:[68.23,14.57]},
+  {n:13,date:"Do 27. Aug",phase:"p4",route:"Lofoten → Narvik",dist:"~290 km · 5 h",
+   desc:"Über die E10 (traumhafte Brücken & Inseln) zurück aufs Festland.",
+   hl:["E10 Inselhopping","Narvik Seilbahn"],ll:[68.44,17.43]},
+  {n:14,date:"Fr 28. Aug",phase:"p4",route:"Narvik → Tromsø",dist:"~250 km · 4 h",
+   desc:"Ins Paris des Nordens. Arktis-Stimmung, evtl. erste Nordlichter.",
+   hl:["Eismeerkathedrale","Fjellheisen-Seilbahn","Abends Nordlicht-Ausschau"],ll:[69.65,18.96]},
+  {n:15,date:"Sa 29. Aug",phase:"p4",route:"Tromsø → Alta",dist:"~310 km · 5 h",
+   desc:"Weiter nach Norden, Tor zum Nordkap.",
+   hl:["Felszeichnungen Alta (UNESCO)","Nordlicht-Kathedrale"],ll:[69.97,23.27]},
+  {n:16,date:"So 30. Aug",phase:"p4",route:"Alta → NORDKAP 🎯",dist:"~240 km · 4 h",
+   desc:"Der nördlichste Punkt Europas! Über Honningsvåg aufs Nordkap-Plateau (71°10'N).",
+   hl:["Nordkap-Plateau & Globus","Eintritt ~35 € einplanen","Rentiere unterwegs"],ll:[71.17,25.78]},
+  {n:17,date:"Mo 31. Aug",phase:"p4",route:"Nordkap → Finnland (Inari)",dist:"~250 km · 4 h",
+   desc:"Südwärts über die Grenze nach Finnisch-Lappland.",
+   hl:["Siida Sami-Museum","Inarisee"],ll:[68.91,27.03]},
+  {n:18,date:"Di 1. Sep",phase:"p5",route:"Inari → Rovaniemi",dist:"~330 km · 4,5 h",
+   desc:"Durch endlose Wälder nach Rovaniemi.",
+   hl:["Rast in der Tundra"],ll:[66.50,25.73]},
+  {n:19,date:"Mi 2. Sep",phase:"p5",route:"Rovaniemi (Polarkreis-Stopp)",dist:"lokal",
+   desc:"Ruhetag in der Hauptstadt Lapplands.",
+   hl:["Santa Claus Village","Arktikum-Museum"],ll:[66.50,25.73]},
+  {n:20,date:"Do 3. Sep",phase:"p5",route:"Rovaniemi → Umeå (Schweden)",dist:"~480 km · 6 h",
+   desc:"Über Tornio nach Schweden, entlang der Bottensee-Küste.",
+   hl:["Grenzstadt Tornio/Haparanda"],ll:[63.83,20.26]},
+  {n:21,date:"Fr 4. Sep",phase:"p5",route:"Umeå → Stockholm",dist:"~640 km · 7 h",
+   desc:"Letzte lange Etappe in die schwedische Hauptstadt.",
+   hl:["Stopp Höga Kusten (UNESCO)"],ll:[59.33,18.07]},
+  {n:22,date:"Sa 5. Sep",phase:"p5",route:"Stockholm entdecken",dist:"lokal",
+   desc:"Ruhetag in Stockholm, Auto stehen lassen.",
+   hl:["Gamla Stan","Vasa-Museum","Schären-Bootstour"],ll:[59.33,18.07]},
+  {n:23,date:"So 6. Sep",phase:"p6",route:"Stockholm → Nynäshamn → Fähre",dist:"~60 km + Fähre",
+   desc:"Kurze Fahrt zum Fährhafen, Abfahrt ~18:00, Nacht in der Kabine.",
+   hl:["Check-in 90 Min vorher","Kabine beziehen"],ll:[58.90,17.95]},
+  {n:24,date:"Mo 7. Sep",phase:"p6",route:"Ankunft Gdansk → Süden",dist:"Fähre + ~600 km",
+   desc:"Ankunft Gdansk mittags, kurzer Altstadtbummel, dann durch Polen Richtung Süden.",
+   hl:["Langer Markt Gdansk","Altstadt-Mittagessen"],ll:[50.08,17.0]},
+  {n:25,date:"Di 8. Sep",phase:"p6",route:"Tschechien → Richtung Heimat",dist:"~550 km · 6 h",
+   desc:"Durch Tschechien/Bayern, letzte Übernachtung.",
+   hl:["Gemütlicher Abschlussabend"],ll:[49.19,16.61]},
+  {n:26,date:"Mi 9. Sep",phase:"p6",route:"→ Wörgl 🏁 Ankunft",dist:"~350 km · 4 h",
+   desc:"Letzte Etappe nach Hause. Geschafft!",
+   hl:["Heimkehr feiern"],ll:[47.49,12.06]}
+];
+
+// ---------- State (lokal + optionaler Live-Sync via Google Sheet) ----------
+const SKEY="nordkap2026_v4";     // Reisedaten (werden synchronisiert)
+const MEKEY="nordkap_me";         // eigene Identität (bleibt lokal pro Gerät)
+const URLKEY="nordkap_syncurl";   // Google Apps Script Web-App URL
+const now=()=>Date.now();
+const uid=()=> 'u'+now().toString(36)+Math.random().toString(36).slice(2,7);
+let ME  = localStorage.getItem(MEKEY) || "Sören";
+let API = localStorage.getItem(URLKEY) || "";
+let state = JSON.parse(localStorage.getItem(SKEY)||"null");
+function saveLocal(){localStorage.setItem(SKEY,JSON.stringify(state));}
+function save(){ saveLocal(); scheduleSync(); }   // jede Änderung: lokal speichern + ggf. synchronisieren
+
+function seed(){
+  const s={title:"🚗 Nordkap Roadtrip 2026", titleTs:1, plan:[], pack:[]};
+  DAYS.forEach(d=>{
+    s.plan.push({ id:'d'+d.n, ts:1, num:d.n, phase:d.phase, date:d.date, title:d.route, dist:d.dist, desc:d.desc,
+      items: d.hl.map((t,i)=>({id:'d'+d.n+'i'+i, ts:1, text:t, author:"Vorschlag", done:false, subs:[]})) });
+  });
+  ["Warme + Regenkleidung (auch im August!)","Schlafsack / Decke fürs Auto","Wanderschuhe",
+   "Powerbank + Ladekabel + Auto-USB","Mückenschutz (Finnland/Lappland!)","Offline-Karten aufs Handy",
+   "Bargeld NOK/DKK/SEK + Kreditkarte","Reisepass / Personalausweis","Erste-Hilfe-Set",
+   "Sonnenbrille + Schlafmaske"].forEach((t,i)=> s.pack.push({id:'p'+i, ts:1, text:t, author:"Vorschlag", done:false}));
+  return s;
+}
+function migrate(old){
+  const s=seed();
+  if(old.me){ ME=old.me; localStorage.setItem(MEKEY,ME); }
+  if(old.title){ s.title=old.title; s.titleTs=now(); }
+  (old.plan||[]).forEach(od=>{
+    let d=s.plan.find(x=>x.num===od.num);
+    if(!d){ d={id:uid(),ts:now(),num:od.num,phase:od.phase||null,date:od.date||'',title:od.title||'',dist:od.dist||'',desc:od.desc||'',items:[]}; s.plan.push(d); }
+    (od.items||[]).forEach(it=>{ if(!d.items.some(x=>x.text===it.text))
+      d.items.push({id:uid(),ts:now(),text:it.text,author:it.author||'Vorschlag',done:!!it.done,
+        subs:(it.subs||[]).map(su=>({id:uid(),ts:now(),text:su.text,author:su.author||'Vorschlag',done:!!su.done}))}); });
+  });
+  (old.pack||[]).forEach(p=>{ if(!s.pack.some(x=>x.text===p.text))
+    s.pack.push({id:uid(),ts:now(),text:p.text,author:p.author||'Vorschlag',done:!!p.done}); });
+  return s;
+}
+if(!state || !state.plan){
+  const old3 = JSON.parse(localStorage.getItem("nordkap2026_v3")||"null");
+  state = old3 ? migrate(old3) : seed();
+  saveLocal();
+}
+state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
+state.pack.forEach(p=>{ if(p.ts==null)p.ts=1; });
+
+// ---------- Merge (mehrere Geräte zusammenführen, neuere Änderung gewinnt) ----------
+function newer(a,b){ return (a.ts||0)>=(b.ts||0)?a:b; }
+function mergeArr(a,b,fn){
+  const m=new Map();
+  (a||[]).forEach(x=>m.set(x.id,x));
+  (b||[]).forEach(x=>{ m.set(x.id, m.has(x.id)?fn(m.get(x.id),x):x); });
+  return [...m.values()];
+}
+function mergeSub(s1,s2){ return newer(s1,s2); }
+function mergeItem(i1,i2){ const b={...newer(i1,i2)}; b.subs=mergeArr(i1.subs||[],i2.subs||[],mergeSub); return b; }
+function mergeDay(d1,d2){ const b={...newer(d1,d2)}; b.items=mergeArr(d1.items||[],d2.items||[],mergeItem); return b; }
+function mergePack(p1,p2){ return newer(p1,p2); }
+function mergeState(a,b){
+  return {
+    title:(a.titleTs||0)>=(b.titleTs||0)?a.title:b.title,
+    titleTs:Math.max(a.titleTs||0,b.titleTs||0),
+    plan:mergeArr(a.plan,b.plan,mergeDay),
+    pack:mergeArr(a.pack,b.pack,mergePack)
+  };
+}
+
+// ---------- Live-Sync (Google Apps Script Web-App) ----------
+let syncing=false, syncTimer=null, pollStarted=false;
+function syncedPart(){ return {title:state.title,titleTs:state.titleTs,plan:state.plan,pack:state.pack}; }
+function scheduleSync(){ if(!API)return; clearTimeout(syncTimer); syncTimer=setTimeout(syncNow,900); }
+function isEditing(){ const a=document.activeElement; return !!(a && (a.isContentEditable || a.tagName==='INPUT')); }
+async function syncNow(){
+  if(!API||syncing)return; syncing=true; setSyncStatus('sync');
+  try{
+    let remote=null;
+    const r=await fetch(API,{method:'GET'}); const t=(await r.text()).trim();
+    if(t && t!=='null') remote=JSON.parse(t);
+    const merged = remote ? mergeState(syncedPart(),remote) : syncedPart();
+    state.title=merged.title; state.titleTs=merged.titleTs; state.plan=merged.plan; state.pack=merged.pack;
+    saveLocal();
+    if(JSON.stringify(merged)!==JSON.stringify(remote)) await fetch(API,{method:'POST',body:JSON.stringify(merged)});
+    if(!isEditing()){ paintTitle(); renderDays(); renderPack(); }
+    setSyncStatus('ok');
+  }catch(e){ setSyncStatus('off'); }
+  syncing=false;
+}
+function ensurePoll(){ if(pollStarted||!API)return; pollStarted=true; setInterval(()=>{ if(!syncing) syncNow(); },5000); }
+function setupSync(){
+  const url=prompt("Web-App-URL aus Google Apps Script einfügen (endet auf /exec).\nLeer lassen + OK = Sync ausschalten:", API||"");
+  if(url===null)return;
+  API=url.trim(); localStorage.setItem(URLKEY,API); paintSyncUI();
+  if(API){ syncNow(); ensurePoll(); } else setSyncStatus('local');
+}
+function setSyncStatus(s){
+  const el=document.getElementById('syncStatus'); if(!el)return;
+  const map={sync:['◌ synchronisiere…','#f6ad55'],ok:['✓ Live-Sync aktiv','#48bb78'],off:['⚠ offline – speichert lokal','#f56565'],local:['nur lokal','#9fb1c4']};
+  const v=map[s]||map.local; el.textContent=v[0]; el.style.color=v[1];
+}
+function paintSyncUI(){
+  const b=document.getElementById('syncBtn'); if(b) b.textContent = API ? '🔗 Sync-Einstellungen' : '🔗 Sync einrichten';
+  setSyncStatus(API?'ok':'local');
+}
+
+// ---------- Selbst-enthaltene SVG-Routenkarte ----------
+const NS="http://www.w3.org/2000/svg";
+const mapEl=document.getElementById('map');
+const latMax=71.8, lonMin=4.0, kLat=29, latMid=60;
+const kLon=kLat*Math.cos(latMid*Math.PI/180), pad=44;
+function proj(ll){return [pad+(ll[1]-lonMin)*kLon, pad+(latMax-ll[0])*kLat];}
+const P=DAYS.map(d=>proj(d.ll));
+
+// Echte (vereinfachte) Länderumrisse – GeoJSON [lon,lat], fest eingebettet (Quelle: Natural Earth)
+const RINGS=[
+ /*NOR*/[[28.165547,71.185474],[31.293418,70.453788],[30.005435,70.186259],[31.101079,69.55808],[29.399581,69.156916],[28.59193,69.064777],[29.015573,69.766491],[27.732292,70.164193],[26.179622,69.825299],[25.689213,69.092114],[24.735679,68.649557],[23.66205,68.891247],[22.356238,68.841741],[21.244936,69.370443],[20.645593,69.106247],[20.025269,69.065139],[19.87856,68.407194],[17.993868,68.567391],[17.729182,68.010552],[16.768879,68.013937],[16.108712,67.302456],[15.108411,66.193867],[13.55569,64.787028],[13.919905,64.445421],[13.571916,64.049114],[12.579935,64.066219],[11.930569,63.128318],[11.992064,61.800362],[12.631147,61.293572],[12.300366,60.117933],[11.468272,59.432393],[11.027369,58.856149],[10.356557,59.469807],[8.382,58.313288],[7.048748,58.078884],[5.665835,58.588155],[5.308234,59.663232],[4.992078,61.970998],[5.9129,62.614473],[8.553411,63.454008],[10.527709,64.486038],[12.358347,65.879726],[14.761146,67.810642],[16.435927,68.563205],[19.184028,69.817444],[21.378416,70.255169],[23.023742,70.202072],[24.546543,71.030497],[26.37005,70.986262],[28.165547,71.185474]],
+ /*SWE*/[[22.183173,65.723741],[21.213517,65.026005],[21.369631,64.413588],[19.778876,63.609554],[17.847779,62.7494],[17.119555,61.341166],[17.831346,60.636583],[18.787722,60.081914],[17.869225,58.953766],[16.829185,58.719827],[16.44771,57.041118],[15.879786,56.104302],[14.666681,56.200885],[14.100721,55.407781],[12.942911,55.361737],[12.625101,56.30708],[11.787942,57.441817],[11.027369,58.856149],[11.468272,59.432393],[12.300366,60.117933],[12.631147,61.293572],[11.992064,61.800362],[11.930569,63.128318],[12.579935,64.066219],[13.571916,64.049114],[13.919905,64.445421],[13.55569,64.787028],[15.108411,66.193867],[16.108712,67.302456],[16.768879,68.013937],[17.729182,68.010552],[17.993868,68.567391],[19.87856,68.407194],[20.025269,69.065139],[20.645593,69.106247],[21.978535,68.616846],[23.539473,67.936009],[23.56588,66.396051],[23.903379,66.006927],[22.183173,65.723741]],
+ /*FIN*/[[28.59193,69.064777],[28.445944,68.364613],[29.977426,67.698297],[29.054589,66.944286],[30.21765,65.80598],[29.54443,64.948672],[30.444685,64.204453],[30.035872,63.552814],[31.516092,62.867687],[31.139991,62.357693],[30.211107,61.780028],[28.069998,60.503517],[26.255173,60.423961],[24.496624,60.057316],[22.869695,59.846373],[22.290764,60.391921],[21.322244,60.72017],[21.544866,61.705329],[21.059211,62.607393],[21.536029,63.189735],[22.442744,63.81781],[24.730512,64.902344],[25.398068,65.111427],[25.294043,65.534346],[23.903379,66.006927],[23.56588,66.396051],[23.539473,67.936009],[21.978535,68.616846],[20.645593,69.106247],[21.244936,69.370443],[22.356238,68.841741],[23.66205,68.891247],[24.735679,68.649557],[25.689213,69.092114],[26.179622,69.825299],[27.732292,70.164193],[29.015573,69.766491],[28.59193,69.064777]],
+ /*DNK1*/[[12.690006,55.609991],[12.089991,54.800015],[11.043543,55.364864],[10.903914,55.779955],[12.370904,56.111407],[12.690006,55.609991]],
+ /*DNK2*/[[10.912182,56.458621],[10.667804,56.081383],[10.369993,56.190007],[9.649985,55.469999],[9.921906,54.983104],[9.282049,54.830865],[8.526229,54.962744],[8.120311,55.517723],[8.089977,56.540012],[8.256582,56.809969],[8.543438,57.110003],[9.424469,57.172066],[9.775559,57.447941],[10.580006,57.730017],[10.546106,57.215733],[10.25,56.890016],[10.369993,56.609982],[10.912182,56.458621]],
+ /*DEU*/[[9.921906,54.983104],[9.93958,54.596642],[10.950112,54.363607],[10.939467,54.008693],[11.956252,54.196486],[12.51844,54.470371],[13.647467,54.075511],[14.119686,53.757029],[14.353315,53.248171],[14.074521,52.981263],[14.4376,52.62485],[14.685026,52.089947],[14.607098,51.745188],[15.016996,51.106674],[14.570718,51.002339],[14.307013,51.117268],[14.056228,50.926918],[13.338132,50.733234],[12.966837,50.484076],[12.240111,50.266338],[12.415191,49.969121],[12.521024,49.547415],[13.031329,49.307068],[13.595946,48.877172],[13.243357,48.416115],[12.884103,48.289146],[13.025851,47.637584],[12.932627,47.467646],[12.62076,47.672388],[12.141357,47.703083],[11.426414,47.523766],[10.544504,47.566399],[10.402084,47.302488],[9.896068,47.580197],[9.594226,47.525058],[8.522612,47.830828],[8.317301,47.61358],[7.466759,47.620582],[7.593676,48.333019],[8.099279,49.017784],[6.65823,49.201958],[6.18632,49.463803],[6.242751,49.902226],[6.043073,50.128052],[6.156658,50.803721],[5.988658,51.851616],[6.589397,51.852029],[6.84287,52.22844],[7.092053,53.144043],[6.90514,53.482162],[7.100425,53.693932],[7.936239,53.748296],[8.121706,53.527792],[8.800734,54.020786],[8.572118,54.395646],[8.526229,54.962744],[9.282049,54.830865],[9.921906,54.983104]],
+ /*POL*/[[15.016996,51.106674],[14.607098,51.745188],[14.685026,52.089947],[14.4376,52.62485],[14.074521,52.981263],[14.353315,53.248171],[14.119686,53.757029],[14.8029,54.050706],[16.363477,54.513159],[17.622832,54.851536],[18.620859,54.682606],[18.696255,54.438719],[19.66064,54.426084],[20.892245,54.312525],[22.731099,54.327537],[23.243987,54.220567],[23.484128,53.912498],[23.527536,53.470122],[23.804935,53.089731],[23.799199,52.691099],[23.199494,52.486977],[23.508002,52.023647],[23.527071,51.578454],[24.029986,50.705407],[23.922757,50.424881],[23.426508,50.308506],[22.51845,49.476774],[22.776419,49.027395],[22.558138,49.085738],[21.607808,49.470107],[20.887955,49.328772],[20.415839,49.431453],[19.825023,49.217125],[19.320713,49.571574],[18.909575,49.435846],[18.853144,49.49623],[18.392914,49.988629],[17.649445,50.049038],[17.554567,50.362146],[16.868769,50.473974],[16.719476,50.215747],[16.176253,50.422607],[16.238627,50.697733],[15.490972,50.78473],[15.016996,51.106674]],
+ /*EST*/[[24.312863,57.793424],[24.428928,58.383413],[24.061198,58.257375],[23.42656,58.612753],[23.339795,59.18724],[24.604214,59.465854],[25.864189,59.61109],[26.949136,59.445803],[27.981114,59.475388],[28.131699,59.300825],[27.420166,58.724581],[27.716686,57.791899],[27.288185,57.474528],[26.463532,57.476389],[25.60281,57.847529],[25.164594,57.970157],[24.312863,57.793424]],
+ /*LVA*/[[21.0558,56.031076],[21.090424,56.783873],[21.581866,57.411871],[22.524341,57.753374],[23.318453,57.006236],[24.12073,57.025693],[24.312863,57.793424],[25.164594,57.970157],[25.60281,57.847529],[26.463532,57.476389],[27.288185,57.474528],[27.770016,57.244258],[27.855282,56.759326],[28.176709,56.16913],[27.10246,55.783314],[26.494331,55.615107],[25.533047,56.100297],[25.000934,56.164531],[24.860684,56.372528],[23.878264,56.273671],[22.201157,56.337802],[21.0558,56.031076]],
+ /*LTU*/[[22.731099,54.327537],[22.651052,54.582741],[22.757764,54.856574],[22.315724,55.015299],[21.268449,55.190482],[21.0558,56.031076],[22.201157,56.337802],[23.878264,56.273671],[24.860684,56.372528],[25.000934,56.164531],[25.533047,56.100297],[26.494331,55.615107],[26.588279,55.167176],[25.768433,54.846963],[25.536354,54.282423],[24.450684,53.905702],[23.484128,53.912498],[23.243987,54.220567],[22.731099,54.327537]],
+ /*AUT*/[[16.979667,48.123497],[16.903754,47.714866],[16.340584,47.712902],[16.534268,47.496171],[16.202298,46.852386],[16.011664,46.683611],[15.137092,46.658703],[14.632472,46.431817],[13.806475,46.509306],[12.376485,46.767559],[12.153088,47.115393],[11.164828,46.941579],[11.048556,46.751359],[10.442701,46.893546],[9.932448,46.920728],[9.47997,47.10281],[9.632932,47.347601],[9.594226,47.525058],[9.896068,47.580197],[10.402084,47.302488],[10.544504,47.566399],[11.426414,47.523766],[12.141357,47.703083],[12.62076,47.672388],[12.932627,47.467646],[13.025851,47.637584],[12.884103,48.289146],[13.243357,48.416115],[13.595946,48.877172],[14.338898,48.555305],[14.901447,48.964402],[15.253416,49.039074],[16.029647,48.733899],[16.499283,48.785808],[16.960288,48.596982],[16.879983,48.470013],[16.979667,48.123497]],
+ /*CZE*/[[16.960288,48.596982],[16.499283,48.785808],[16.029647,48.733899],[15.253416,49.039074],[14.901447,48.964402],[14.338898,48.555305],[13.595946,48.877172],[13.031329,49.307068],[12.521024,49.547415],[12.415191,49.969121],[12.240111,50.266338],[12.966837,50.484076],[13.338132,50.733234],[14.056228,50.926918],[14.307013,51.117268],[14.570718,51.002339],[15.016996,51.106674],[15.490972,50.78473],[16.238627,50.697733],[16.176253,50.422607],[16.719476,50.215747],[16.868769,50.473974],[17.554567,50.362146],[17.649445,50.049038],[18.392914,49.988629],[18.853144,49.49623],[18.554971,49.495015],[18.399994,49.315001],[18.170498,49.271515],[18.104973,49.043983],[17.913512,48.996493],[17.886485,48.903475],[17.545007,48.800019],[17.101985,48.816969],[16.960288,48.596982]]
+];
+const landPaths=RINGS.map(ring=>"M"+ring.map(pt=>{const p=proj([pt[1],pt[0]]);return p[0].toFixed(1)+","+p[1].toFixed(1);}).join("L")+"Z");
+
+let vbW=0,vbH=0;
+P.forEach(p=>{vbW=Math.max(vbW,p[0]);vbH=Math.max(vbH,p[1]);});
+RINGS.forEach(ring=>ring.forEach(pt=>{const p=proj([pt[1],pt[0]]);vbW=Math.max(vbW,p[0]);vbH=Math.max(vbH,p[1]);}));
+vbW+=pad; vbH+=pad;
+const LABELS={1:"Wörgl",2:"Oslo",4:"Bergen",6:"Geiranger",8:"Trondheim",
+  10:"Bodø",11:"Lofoten",14:"Tromsø",16:"NORDKAP",19:"Rovaniemi",21:"Stockholm",24:"Gdansk"};
+const svg=document.createElementNS(NS,"svg");
+svg.setAttribute("viewBox",`0 0 ${vbW} ${vbH}`);
+svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+const g=document.createElementNS(NS,"g");
+svg.appendChild(g);
+// Meer-Hintergrund
+const sea=document.createElementNS(NS,"rect");
+sea.setAttribute("x",-2000);sea.setAttribute("y",-2000);
+sea.setAttribute("width",vbW+4000);sea.setAttribute("height",vbH+4000);
+sea.setAttribute("fill","#15293a");
+g.appendChild(sea);
+// Landflächen (Basemap)
+landPaths.forEach(d=>{
+  const pa=document.createElementNS(NS,"path");
+  pa.setAttribute("d",d);
+  pa.setAttribute("fill","#33453c");
+  pa.setAttribute("stroke","#48604f");
+  pa.setAttribute("stroke-width","0.8");
+  pa.setAttribute("stroke-linejoin","round");
+  g.appendChild(pa);
+});
+for(let i=0;i<P.length-1;i++){
+  const ln=document.createElementNS(NS,"line");
+  ln.setAttribute("x1",P[i][0]);ln.setAttribute("y1",P[i][1]);
+  ln.setAttribute("x2",P[i+1][0]);ln.setAttribute("y2",P[i+1][1]);
+  ln.setAttribute("stroke",PHASES[DAYS[i+1].phase].color);
+  ln.setAttribute("stroke-width","2.6");ln.setAttribute("stroke-linecap","round");ln.setAttribute("opacity","0.9");
+  g.appendChild(ln);
+}
+DAYS.forEach((d,i)=>{
+  const c=PHASES[d.phase].color, x=P[i][0], y=P[i][1];
+  const node=document.createElementNS(NS,"g");
+  node.setAttribute("class","node");node.setAttribute("id","node-"+d.n);
+  const ring=document.createElementNS(NS,"circle");
+  ring.setAttribute("class","ring");ring.setAttribute("cx",x);ring.setAttribute("cy",y);
+  ring.setAttribute("r","9");ring.setAttribute("fill","none");ring.setAttribute("stroke",c);
+  ring.setAttribute("stroke-width","2");ring.setAttribute("opacity","0");
+  const dot=document.createElementNS(NS,"circle");
+  dot.setAttribute("class","dot");dot.setAttribute("cx",x);dot.setAttribute("cy",y);
+  dot.setAttribute("r","8");dot.setAttribute("fill",c);dot.setAttribute("stroke","#0f1720");dot.setAttribute("stroke-width","2");
+  const t=document.createElementNS(NS,"text");
+  t.setAttribute("x",x);t.setAttribute("y",y+3.2);t.setAttribute("text-anchor","middle");
+  t.setAttribute("font-size","8");t.setAttribute("font-weight","700");t.setAttribute("fill","#0f1720");t.textContent=d.n;
+  node.append(ring,dot,t);
+  if(LABELS[d.n]){
+    const lab=document.createElementNS(NS,"text");
+    lab.setAttribute("x",x+12);lab.setAttribute("y",y+3.5);
+    lab.setAttribute("font-size","11");lab.setAttribute("font-weight",d.n===16?"800":"600");
+    lab.setAttribute("fill",d.n===16?"#f56565":"#e7eef6");
+    lab.textContent=(d.n===16?"🎯 ":"")+LABELS[d.n];
+    node.appendChild(lab);
+  }
+  node.addEventListener('click',e=>{e.stopPropagation();scrollToDay(d.n);});
+  node.addEventListener('mousemove',e=>showTip(e,`Tag ${d.n} · ${d.date} — ${d.route}`));
+  node.addEventListener('mouseleave',hideTip);
+  g.appendChild(node);
+});
+mapEl.appendChild(svg);
+const tip=document.createElement('div');tip.className='mtip';mapEl.appendChild(tip);
+function showTip(e,txt){const r=mapEl.getBoundingClientRect();
+  tip.textContent=txt;tip.style.opacity=1;
+  tip.style.left=(e.clientX-r.left+12)+'px';tip.style.top=(e.clientY-r.top+12)+'px';}
+function hideTip(){tip.style.opacity=0;}
+const leg=document.createElement('div');leg.className='mlegend';
+leg.innerHTML='<b>Reisephasen</b>'+Object.values(PHASES).map(p=>
+  `<span><i style="background:${p.color}"></i>${p.name}</span>`).join('');
+mapEl.appendChild(leg);
+let zoom=1, tx=0, ty=0;
+function apply(){g.setAttribute("transform",`translate(${tx} ${ty}) scale(${zoom})`);}
+function zoomBy(f){zoom=Math.min(6,Math.max(1,zoom*f));apply();}
+const ctr=document.createElement('div');ctr.className='mzoom';
+ctr.innerHTML='<button title="Vergrößern">+</button><button title="Verkleinern">−</button><button title="Zurücksetzen">⤢</button>';
+mapEl.appendChild(ctr);
+ctr.children[0].onclick=()=>zoomBy(1.4);
+ctr.children[1].onclick=()=>zoomBy(1/1.4);
+ctr.children[2].onclick=()=>{zoom=1;tx=0;ty=0;apply();};
+svg.addEventListener('wheel',e=>{e.preventDefault();zoomBy(e.deltaY<0?1.15:1/1.15);},{passive:false});
+let drag=null;
+svg.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY,tx,ty};svg.classList.add('drag');});
+window.addEventListener('mousemove',e=>{if(!drag)return;
+  const s=vbW/mapEl.clientWidth; tx=drag.tx+(e.clientX-drag.x)*s; ty=drag.ty+(e.clientY-drag.y)*s; apply();});
+window.addEventListener('mouseup',()=>{drag=null;svg.classList.remove('drag');});
+
+function focusDay(n){
+  const node=document.getElementById('node-'+n);
+  mapEl.scrollIntoView({behavior:'smooth',block:'center'});
+  if(!node)return;
+  node.classList.remove('pulse');void node.offsetWidth;node.classList.add('pulse');
+  node.parentNode.appendChild(node);
+}
+function scrollToDay(n){
+  const el=document.getElementById('day-'+n);
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1500);
+}
+
+// ---------- Identität ----------
+const whoBtns=document.querySelectorAll('.who button');
+function setMe(name){ME=name;localStorage.setItem(MEKEY,ME);paintWho();}
+function paintWho(){whoBtns.forEach(b=>{
+  const on=b.dataset.name===ME;
+  b.classList.toggle('on',on);
+  b.style.background=on?(PEOPLE[b.dataset.name]):'var(--panel)';
+  b.style.borderColor=on?PEOPLE[b.dataset.name]:'var(--line)';
+});}
+whoBtns.forEach(b=>b.onclick=()=>setMe(b.dataset.name));
+paintWho();
+
+// ---------- Item-Rendering ----------
+function authorBadge(a){const c=PEOPLE[a]||'#7a8aa0';
+  return `<span class="author" style="background:${c}">${a}</span>`;}
+function itemRow(it,onToggle,onDel){
+  const li=document.createElement('li');
+  li.className='item'+(it.done?' checked':'');
+  li.innerHTML=`<input type="checkbox" ${it.done?'checked':''}>
+    <span class="txt">${escapeHtml(it.text)}</span>${authorBadge(it.author)}
+    <button class="del" title="Löschen">✕</button>`;
+  li.querySelector('input').onchange=onToggle;
+  li.querySelector('.del').onclick=onDel;
+  return li;
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ---------- Phasen-Filter ----------
+const pb=document.getElementById('phasebar');
+let activeFilter="all";
+const allChip=document.createElement('div');
+allChip.className='chip active';allChip.textContent='Alle';allChip.style.background='#fff';allChip.style.color='#0f1720';
+allChip.onclick=()=>setFilter('all',allChip);
+pb.appendChild(allChip);
+Object.entries(PHASES).forEach(([id,p])=>{
+  const c=document.createElement('div');c.className='chip';c.textContent=p.name;c.onclick=()=>setFilter(id,c);
+  pb.appendChild(c);
+});
+function setFilter(f,el){
+  activeFilter=f;
+  [...pb.children].forEach(ch=>{ch.classList.remove('active');ch.style.background='var(--panel)';ch.style.color='var(--muted)'});
+  el.classList.add('active');
+  if(f==='all'){el.style.background='#fff';el.style.color='#0f1720'}
+  else{el.style.background=PHASES[f].color;el.style.color='#0f1720'}
+  renderDays();
+}
+
+// ---------- Editierbarer Tagesplaner ----------
+const dayWrap=document.getElementById('days');
+function badgeEl(a){const c=PEOPLE[a]||'#7a8aa0';const s=document.createElement('span');
+  s.className='author';s.style.background=c;s.textContent=a;return s;}
+function mkEditable(text,cls,onSave,ph){
+  const el=document.createElement('span');
+  el.className=cls;el.contentEditable="true";el.spellcheck=false;el.textContent=text||'';
+  if(ph)el.setAttribute('data-ph',ph);
+  el.addEventListener('blur',()=>onSave(el.textContent.trim()));
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el.blur();}});
+  return el;
+}
+function renderDays(){
+  dayWrap.innerHTML='';
+  const plan=state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0));
+  plan.forEach(d=>{
+    if(activeFilter!=='all' && activeFilter!==d.phase) return;
+    const ph=PHASES[d.phase]; const col=ph?ph.color:'#7a8aa0';
+    const div=document.createElement('div');
+    div.id='day-'+d.num;div.className='day';div.style.borderLeftColor=col;
+
+    // Kopfzeile: Tag-Nr (sortiert), Datum, Phase, Karte, Löschen
+    const head=document.createElement('div');head.className='dhead2';
+    const left=document.createElement('div');left.className='dhead-left';
+    const numWrap=document.createElement('span');numWrap.className='dnum';
+    numWrap.appendChild(document.createTextNode('Tag '));
+    const numIn=document.createElement('input');numIn.type='number';numIn.className='numin';numIn.value=d.num;numIn.min=1;
+    numIn.onchange=()=>{d.num=parseInt(numIn.value)||d.num;d.ts=now();save();renderDays();};
+    numWrap.appendChild(numIn);left.appendChild(numWrap);
+    left.appendChild(document.createTextNode(' · '));
+    left.appendChild(mkEditable(d.date,'ddate-ed',v=>{d.date=v;d.ts=now();save();},'Datum'));
+    if(ph){const tag=document.createElement('span');tag.className='dtag';tag.style.background=ph.color;tag.textContent=ph.name;left.appendChild(tag);}
+    head.appendChild(left);
+    const ctrls=document.createElement('div');ctrls.className='dctrls';
+    const mapB=document.createElement('button');mapB.className='mapbtn';mapB.textContent='🗺 Auf Karte';
+    mapB.onclick=()=>focusDay(d.num);ctrls.appendChild(mapB);
+    const delB=document.createElement('button');delB.className='delday';delB.textContent='✕ Tag';delB.title='Diesen Tag löschen';
+    delB.onclick=()=>{if(confirm('Tag '+d.num+' wirklich löschen?')){d.deleted=true;d.ts=now();save();renderDays();}};
+    ctrls.appendChild(delB);head.appendChild(ctrls);
+    div.appendChild(head);
+
+    // Titel, Distanz, Beschreibung (editierbar)
+    div.appendChild(mkEditable(d.title,'droute-ed',v=>{d.title=v;d.ts=now();save();},'Titel des Tages…'));
+    const meta=document.createElement('div');meta.className='dmeta-ed';
+    meta.appendChild(document.createTextNode('📍 '));
+    meta.appendChild(mkEditable(d.dist,'ddist-ed',v=>{d.dist=v;d.ts=now();save();},'Distanz / Fahrzeit'));
+    div.appendChild(meta);
+    div.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
+
+    // Einträge + Unterpunkte
+    const ul=document.createElement('ul');ul.className='items';
+    d.items.filter(it=>!it.deleted).forEach(it=>{
+      if(!it.subs)it.subs=[];
+      const li=document.createElement('li');li.className='item'+(it.done?' checked':'');
+      const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!it.done;
+      cb.onchange=()=>{it.done=cb.checked;it.ts=now();save();renderDays();};li.appendChild(cb);
+      li.appendChild(mkEditable(it.text,'txt-ed',v=>{it.text=v;it.ts=now();save();},'Eintrag…'));
+      li.appendChild(badgeEl(it.author));
+      const subB=document.createElement('button');subB.className='subbtn';subB.textContent='+ Unterpunkt';
+      subB.onclick=()=>{const ns={id:uid(),ts:now(),text:'',author:ME,done:false};it.subs.push(ns);save();renderDays();
+        setTimeout(()=>{const e=document.getElementById('sub-'+ns.id);e&&e.focus();},0);};
+      li.appendChild(subB);
+      const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Eintrag löschen';
+      del.onclick=()=>{it.deleted=true;it.ts=now();save();renderDays();};
+      li.appendChild(del);
+      ul.appendChild(li);
+      it.subs.filter(su=>!su.deleted).forEach(su=>{
+        const sli=document.createElement('li');sli.className='subitem'+(su.done?' checked':'');
+        const scb=document.createElement('input');scb.type='checkbox';scb.checked=!!su.done;
+        scb.onchange=()=>{su.done=scb.checked;su.ts=now();save();renderDays();};sli.appendChild(scb);
+        const stxt=mkEditable(su.text,'txt-ed',v=>{su.text=v;su.ts=now();save();},'Unterpunkt…');
+        stxt.id='sub-'+su.id;sli.appendChild(stxt);
+        sli.appendChild(badgeEl(su.author));
+        const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Unterpunkt löschen';
+        sdel.onclick=()=>{su.deleted=true;su.ts=now();save();renderDays();};
+        sli.appendChild(sdel);
+        ul.appendChild(sli);
+      });
+    });
+    div.appendChild(ul);
+
+    // Eintrag hinzufügen
+    const add=document.createElement('div');add.className='additem';
+    const inp=document.createElement('input');inp.type='text';inp.placeholder='Eintrag für Tag '+d.num+' hinzufügen…';
+    const btn=document.createElement('button');btn.textContent='+ Hinzufügen';
+    const go=()=>{const v=inp.value.trim();if(!v)return;
+      d.items.push({id:uid(),ts:now(),text:v,author:ME,done:false,subs:[]});save();renderDays();
+      setTimeout(()=>{const el=document.getElementById('day-'+d.num);if(el){const i=el.querySelector('.additem input');i&&i.focus();}},0);};
+    btn.onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go();};
+    add.appendChild(inp);add.appendChild(btn);div.appendChild(add);
+
+    dayWrap.appendChild(div);
+  });
+}
+function addDay(){
+  const maxNum=state.plan.reduce((m,d)=>Math.max(m,d.num||0),0);
+  const nd={id:uid(),ts:now(),num:maxNum+1,phase:null,date:'',title:'',dist:'',desc:'',items:[]};
+  state.plan.push(nd);save();renderDays();
+  setTimeout(()=>{const el=document.getElementById('day-'+nd.num);
+    if(el){el.scrollIntoView({behavior:'smooth',block:'center'});const t=el.querySelector('.droute-ed');t&&t.focus();}},0);
+}
+
+// ---------- Packliste ----------
+const packUl=document.getElementById('packlist');
+function renderPack(){
+  packUl.innerHTML='';
+  state.pack.filter(it=>!it.deleted).forEach(it=>{
+    packUl.appendChild(itemRow(it,
+      ()=>{it.done=!it.done;it.ts=now();save();renderPack();},
+      ()=>{it.deleted=true;it.ts=now();save();renderPack();}));
+  });
+}
+function addPack(){
+  const inp=document.getElementById('packinput');const v=inp.value.trim();if(!v)return;
+  state.pack.push({id:uid(),ts:now(),text:v,author:ME,done:false});
+  inp.value='';save();renderPack();inp.focus();
+}
+
+// ---------- Export / Import (Backup & manuelles Zusammenführen) ----------
+function exportData(){
+  const blob=new Blob([JSON.stringify(syncedPart(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='nordkap-plan-'+ME.toLowerCase()+'.json';a.click();
+}
+function importData(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const inc=JSON.parse(r.result);
+    const m=mergeState(syncedPart(),{title:inc.title||state.title,titleTs:inc.titleTs||1,plan:inc.plan||[],pack:inc.pack||[]});
+    state.title=m.title;state.titleTs=m.titleTs;state.plan=m.plan;state.pack=m.pack;
+    save();paintTitle();renderDays();renderPack();
+    alert('Listen erfolgreich zusammengeführt ✓');
+  }catch(err){alert('Datei konnte nicht gelesen werden.');}
+  input.value='';};
+  r.readAsText(f);
+}
+
+// ---------- Gesamttitel ----------
+const titleEl=document.getElementById('tripTitle');
+function paintTitle(){ if(titleEl && state.title && document.activeElement!==titleEl) titleEl.textContent=state.title; }
+paintTitle();
+titleEl.addEventListener('blur',()=>{state.title=titleEl.textContent.trim()||state.title;state.titleTs=now();save();});
+titleEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();titleEl.blur();}});
+
+// ---------- Init ----------
+renderDays();
+renderPack();
+paintSyncUI();
+if(API){ syncNow(); ensurePoll(); }
+</script>
+</body>
+</html>
