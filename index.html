@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0f1720; --panel:#172230; --panel2:#1e2c3d; --line:#2a3a4d;
-    --text:#e7eef6; --muted:#9fb1c4; --accent:#4fd1c5; --accent2:#f6ad55;
+    --text:#e7eef6; --muted:#9fb1c4; --accent:#2f6347; --accent2:#79b095; --onAccent:#ffffff;
     --p1:#4fd1c5; --p2:#63b3ed; --p3:#9f7aea; --p4:#f56565; --p5:#48bb78; --p6:#ed8936;
     --soeren:#4fd1c5; --flo:#63b3ed; --sarah:#f6ad55;
   }
@@ -33,16 +33,17 @@
   .node.pulse circle.ring{animation:pulse 1.4s ease-out 2}
   @keyframes pulse{0%{r:9;opacity:.9}100%{r:26;opacity:0}}
   .mzoom{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
-  .mzoom button{width:34px;height:34px;font-size:1.2rem;border-radius:8px;border:1px solid var(--line);
-    background:rgba(20,32,46,.92);color:var(--text);cursor:pointer}
-  .mzoom button:hover{border-color:var(--accent)}
-  .mlegend{position:absolute;left:12px;top:12px;z-index:5;background:rgba(15,23,32,.82);border:1px solid var(--line);
-    border-radius:10px;padding:8px 10px;font-size:.72rem;color:var(--muted);max-width:160px}
-  .mlegend b{color:var(--text);display:block;margin-bottom:4px;font-size:.78rem}
+  .mzoom button{width:34px;height:34px;font-size:1.2rem;font-weight:700;border-radius:8px;
+    border:1px solid rgba(231,238,246,.4);background:rgba(13,20,28,.95);color:#eef4fb;cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.45)}
+  .mzoom button:hover{border-color:var(--accent);background:rgba(20,32,46,.98)}
+  .mlegend{position:absolute;left:12px;top:12px;z-index:5;background:rgba(13,20,28,.9);border:1px solid rgba(231,238,246,.18);
+    border-radius:10px;padding:8px 10px;font-size:.72rem;color:#b6c6d6;max-width:160px}
+  .mlegend b{color:#eef4fb;display:block;margin-bottom:4px;font-size:.78rem}
   .mlegend span{display:flex;align-items:center;gap:6px;margin:2px 0}
   .mlegend i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
   .mtip{position:absolute;pointer-events:none;background:#0f1720;border:1px solid var(--accent);
-    border-radius:8px;padding:6px 9px;font-size:.78rem;color:var(--text);z-index:6;opacity:0;transition:opacity .12s;white-space:nowrap}
+    border-radius:8px;padding:6px 9px;font-size:.78rem;color:#eef4fb;z-index:6;opacity:0;transition:opacity .12s;white-space:nowrap}
 
   /* Toolbar / Identität */
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 14px}
@@ -79,7 +80,7 @@
   .locinput:focus{outline:none;border-color:var(--accent)}
   .locbtn{background:var(--panel2);border:1px solid var(--accent);color:var(--accent);border-radius:8px;
     padding:5px 12px;font-size:.8rem;cursor:pointer;font-weight:600}
-  .locbtn:hover{background:var(--accent);color:#0f1720}
+  .locbtn:hover{background:var(--accent);color:var(--onAccent)}
   .locreset{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;
     padding:5px 9px;font-size:.85rem;cursor:pointer}
   .locreset:hover{border-color:var(--accent);color:var(--accent)}
@@ -124,7 +125,7 @@
   .addexp input[type=number]{width:90px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
   .addexp input:focus{outline:none;border-color:var(--accent)}
   .addexp select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
-  .addexp button{background:var(--accent);border:none;color:#0f1720;font-weight:700;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:.88rem}
+  .addexp button{background:var(--accent);border:none;color:var(--onAccent);font-weight:700;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:.88rem}
   /* Helles Theme */
   body.light{ --bg:#f3f6fa; --panel:#ffffff; --panel2:#eef2f7; --line:#d3dde7;
     --text:#1a2733; --muted:#5a6b7b; }
@@ -162,14 +163,14 @@
   .additem input[type=text]{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);
     border-radius:8px;padding:7px 10px;font-size:.88rem;font-family:inherit}
   .additem input[type=text]:focus{outline:none;border-color:var(--accent)}
-  .additem button{background:var(--accent);border:none;color:#0f1720;font-weight:700;border-radius:8px;
+  .additem button{background:var(--accent);border:none;color:var(--onAccent);font-weight:700;border-radius:8px;
     padding:7px 14px;cursor:pointer;font-size:.88rem}
 
   /* Editierbarer Planer */
   #tripTitle{outline:none;border-radius:6px;padding:0 4px;margin-left:-4px}
   #tripTitle:focus{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px var(--accent)}
   .planbar{margin:0 0 14px}
-  .adddaybtn{background:var(--accent);border:none;color:#0f1720;font-weight:700;border-radius:8px;
+  .adddaybtn{background:var(--accent);border:none;color:var(--onAccent);font-weight:700;border-radius:8px;
     padding:8px 16px;cursor:pointer;font-size:.9rem}
   .adddaybtn:hover{filter:brightness(1.08)}
   .dhead2{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -284,7 +285,26 @@ const PHASES = {
   p5:{name:"Finnland/Schweden",color:"#48bb78"},
   p6:{name:"Fähre & Heimreise",color:"#ed8936"}
 };
-const PEOPLE = {"Sören":"#4fd1c5","Flo":"#63b3ed","Sarah":"#f6ad55","Vorschlag":"#7a8aa0"};
+const PEOPLE = {"Sören":"#2f6347","Flo":"#9b7fd6","Sarah":"#8f2f3d","Vorschlag":"#7a8aa0"};
+// Persönliche Akzentfarbe je nach „Ich bin"-Auswahl
+const THEMES = {
+  "Sören":{accent:"#2f6347", accent2:"#79b095"},   // Waldgrün (dunkler)
+  "Flo":  {accent:"#9b7fd6", accent2:"#c3a9ec"},   // Flieder
+  "Sarah":{accent:"#8f2f3d", accent2:"#cf7e8c"}    // Bordeauxrot (dunkler)
+};
+// lesbare Schriftfarbe (dunkel/hell) je nach Hintergrundhelligkeit
+function textOn(hex){
+  const h=(hex||'').replace('#',''); if(h.length<6) return '#0f1720';
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  const lum=(0.299*r+0.587*g+0.114*b)/255;
+  return lum>0.58 ? '#0f1720' : '#ffffff';
+}
+function applyPersonTheme(name){
+  const t=THEMES[name]||THEMES["Sören"];
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent2', t.accent2);
+  document.documentElement.style.setProperty('--onAccent', textOn(t.accent));
+}
 
 const DAYS = [
   {n:1,date:"Sa 15. Aug",phase:"p1",route:"Wörgl → Hamburg/Lübeck",dist:"~920 km · 9 h",
@@ -411,7 +431,9 @@ if(!state || !state.plan){
   state = old3 ? migrate(old3) : seed();
   saveLocal();
 }
-state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.stays=d.stays||[]; d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
+state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.stays=d.stays||[];
+  if(typeof d.lat==='number' && d.eLat==null){ d.eLat=d.lat; d.eLon=d.lon; delete d.lat; delete d.lon; } // alter Einzelpunkt → Endpunkt
+  d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
 state.pack.forEach(p=>{ if(p.ts==null)p.ts=1; });
 state.expenses=state.expenses||[]; state.expenses.forEach(x=>{ if(x.ts==null)x.ts=1; });
 
@@ -538,17 +560,24 @@ landPaths.forEach(d=>{
 const routeLayer=document.createElementNS(NS,"g");
 g.appendChild(routeLayer);
 const mapNodes={};
-function defLL(num){const dd=DAYS.find(x=>x.n===num);return dd?dd.ll:null;}
-function coordsOf(d){ if(typeof d.lat==='number' && typeof d.lon==='number') return [d.lat,d.lon]; return defLL(d.num); }
+const ORIGIN=[47.49,12.06]; // Wörgl – Reisestart
+function defEnd(num){const dd=DAYS.find(x=>x.n===num);return dd?dd.ll:null;}
+function endOf(d){ return (typeof d.eLat==='number')?[d.eLat,d.eLon]:defEnd(d.num); }
 function haversine(a,b){ const R=6371,r=Math.PI/180;
   const dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r, la1=a[0]*r, la2=b[0]*r;
   const h=Math.sin(dLa/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;
   return 2*R*Math.asin(Math.sqrt(h)); }
 const ROADFAC=1.3, AVGKMH=75;   // Luftlinie→Straße ~1,3x, Schnitt 75 km/h
-function tripLegs(){ // {legKm:{num:km}, totalKm}
-  const days=state.plan.filter(d=>!d.deleted && coordsOf(d)).sort((a,b)=>(a.num||0)-(b.num||0));
-  const legKm={}; let total=0;
-  for(let i=1;i<days.length;i++){ const km=haversine(coordsOf(days[i-1]),coordsOf(days[i]))*ROADFAC; legKm[days[i].num]=km; total+=km; }
+// sortierte Tage mit aufgelösten Start-/Endpunkten (Start standardmäßig = Ende des Vortags)
+function resolvedDays(){
+  const ds=state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0));
+  const out=ds.map(d=>({d, end:endOf(d)}));
+  out.forEach((o,i)=>{ o.start = (typeof o.d.sLat==='number')?[o.d.sLat,o.d.sLon] : (i>0?out[i-1].end:ORIGIN); });
+  return out;
+}
+function tripLegs(){ // {legKm:{num:km}, totalKm} – pro Tag Start→Ende
+  const rd=resolvedDays(); const legKm={}; let total=0;
+  rd.forEach(o=>{ if(o.start && o.end){ const km=haversine(o.start,o.end)*ROADFAC; legKm[o.d.num]=km; total+=km; } });
   return {legKm, totalKm:total};
 }
 function fmtKm(km){ return Math.round(km).toLocaleString('de-DE')+' km'; }
@@ -572,18 +601,26 @@ function parseName(s){ const m=s.match(/\/place\/([^\/@?]+)/); if(!m)return null
 function renderMap(){
   while(routeLayer.firstChild) routeLayer.removeChild(routeLayer.firstChild);
   for(const k in mapNodes) delete mapNodes[k];
-  const days=state.plan.filter(d=>!d.deleted && coordsOf(d)).sort((a,b)=>(a.num||0)-(b.num||0));
-  for(let i=0;i<days.length-1;i++){
-    const a=proj(coordsOf(days[i])), b=proj(coordsOf(days[i+1]));
-    const ln=document.createElementNS(NS,"line");
-    ln.setAttribute("x1",a[0]);ln.setAttribute("y1",a[1]);ln.setAttribute("x2",b[0]);ln.setAttribute("y2",b[1]);
-    const ph=PHASES[days[i+1].phase]; ln.setAttribute("stroke",ph?ph.color:'#7a8aa0');
-    ln.setAttribute("stroke-width","2.6");ln.setAttribute("stroke-linecap","round");ln.setAttribute("opacity","0.9");
+  const rd=resolvedDays().filter(o=>o.start && o.end);
+  rd.forEach((o,i)=>{
+    const ph=PHASES[o.d.phase], c=ph?ph.color:'#7a8aa0';
+    if(i>0){ // gestrichelte Verbindung Vortags-Ende → heutiger Start (nur falls abweichend)
+      const pe=rd[i-1].end, st=o.start;
+      if(Math.abs(pe[0]-st[0])>0.02 || Math.abs(pe[1]-st[1])>0.02){
+        const a=proj(pe), b=proj(st), cn=document.createElementNS(NS,"line");
+        cn.setAttribute("x1",a[0]);cn.setAttribute("y1",a[1]);cn.setAttribute("x2",b[0]);cn.setAttribute("y2",b[1]);
+        cn.setAttribute("stroke","#5a6b7b");cn.setAttribute("stroke-width","1.2");cn.setAttribute("stroke-dasharray","3 3");cn.setAttribute("opacity","0.6");
+        routeLayer.appendChild(cn);
+      }
+    }
+    const sa=proj(o.start), sb=proj(o.end), ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",sa[0]);ln.setAttribute("y1",sa[1]);ln.setAttribute("x2",sb[0]);ln.setAttribute("y2",sb[1]);
+    ln.setAttribute("stroke",c);ln.setAttribute("stroke-width","2.6");ln.setAttribute("stroke-linecap","round");ln.setAttribute("opacity","0.9");
     routeLayer.appendChild(ln);
-  }
-  days.forEach(d=>{
-    const ph=PHASES[d.phase], c=ph?ph.color:'#7a8aa0';
-    const p=proj(coordsOf(d)), x=p[0], y=p[1];
+  });
+  rd.forEach(o=>{
+    const d=o.d, ph=PHASES[d.phase], c=ph?ph.color:'#7a8aa0';
+    const p=proj(o.end), x=p[0], y=p[1];
     const node=document.createElementNS(NS,"g");
     node.setAttribute("class","node");node.setAttribute("id","node-"+d.num);
     const ring=document.createElementNS(NS,"circle");
@@ -646,19 +683,21 @@ function scrollToDay(n){
 
 // ---------- Identität ----------
 const whoBtns=document.querySelectorAll('.who button');
-function setMe(name){ME=name;localStorage.setItem(MEKEY,ME);paintWho();}
+function setMe(name){ME=name;localStorage.setItem(MEKEY,ME);applyPersonTheme(ME);paintWho();}
 function paintWho(){whoBtns.forEach(b=>{
   const on=b.dataset.name===ME;
   b.classList.toggle('on',on);
   b.style.background=on?(PEOPLE[b.dataset.name]):'var(--panel)';
+  b.style.color=on?textOn(PEOPLE[b.dataset.name]):'';
   b.style.borderColor=on?PEOPLE[b.dataset.name]:'var(--line)';
 });}
 whoBtns.forEach(b=>b.onclick=()=>setMe(b.dataset.name));
+applyPersonTheme(ME);
 paintWho();
 
 // ---------- Item-Rendering ----------
 function authorBadge(a){const c=PEOPLE[a]||'#7a8aa0';
-  return `<span class="author" style="background:${c}">${a}</span>`;}
+  return `<span class="author" style="background:${c};color:${textOn(c)}">${a}</span>`;}
 function itemRow(it,onToggle,onDel){
   const li=document.createElement('li');
   li.className='item'+(it.done?' checked':'');
@@ -694,7 +733,7 @@ function setFilter(f,el){
 // ---------- Editierbarer Tagesplaner ----------
 const dayWrap=document.getElementById('days');
 function badgeEl(a){const c=PEOPLE[a]||'#7a8aa0';const s=document.createElement('span');
-  s.className='author';s.style.background=c;s.textContent=a;return s;}
+  s.className='author';s.style.background=c;s.style.color=textOn(c);s.textContent=a;return s;}
 function mkEditable(text,cls,onSave,ph){
   const el=document.createElement('span');
   el.className=cls;el.contentEditable="true";el.spellcheck=false;el.textContent=text||'';
@@ -748,36 +787,35 @@ function renderDays(){
     div.appendChild(meta);
     div.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
 
-    // Standort (Google-Maps-Link oder Koordinaten) – verschiebt den Punkt auf der Karte
-    const locRow=document.createElement('div');locRow.className='locrow';
-    const hasCustom=(typeof d.lat==='number');
-    const cur=coordsOf(d);
-    const locLabel=document.createElement('span');locLabel.className='loclabel';
-    locLabel.textContent = hasCustom ? ('📌 '+d.lat.toFixed(4)+', '+d.lon.toFixed(4)) : (cur?'📍 Standard-Standort':'⚠ kein Standort');
-    const locInput=document.createElement('input');locInput.type='text';locInput.className='locinput';
-    locInput.placeholder='Google-Maps-Link oder „Breite, Länge" einfügen…';
-    const locBtn=document.createElement('button');locBtn.className='locbtn';locBtn.textContent='Setzen';
-    const setLoc=()=>{
-      const v=locInput.value.trim();
-      if(!v){ if(hasCustom){ delete d.lat; delete d.lon; d.ts=now(); save(); renderDays(); } return; }
-      const g2=parseGeo(v);
-      if(!g2 || Math.abs(g2.lat)>90 || Math.abs(g2.lon)>180){
-        alert('Konnte keine Koordinaten erkennen.\n\nTipp: In Google Maps oben die Adresszeile kopieren (enthält @Breite,Länge) – kurze „Teilen"-Links funktionieren leider nicht. Oder Koordinaten direkt eingeben, z. B. 67.9, 13.1');
-        return;
-      }
-      d.lat=g2.lat; d.lon=g2.lon;
-      const nm=parseName(v); if(nm && !(d.title||'').trim()) d.title=nm;
-      d.ts=now(); save(); renderDays(); focusDay(d.num);
+    // Standorte: Startpunkt & Endpunkt des Tages (Google-Maps-Link oder Koordinaten)
+    const locField=(label,latKey,lonKey,hasDefault)=>{
+      const row=document.createElement('div');row.className='locrow';
+      const has=(typeof d[latKey]==='number');
+      const tag=document.createElement('span');tag.className='loclabel';
+      tag.innerHTML='<b>'+label+':</b> '+(has?('📌 '+d[latKey].toFixed(4)+', '+d[lonKey].toFixed(4)):(hasDefault?'📍 Standard':'⚠ –'));
+      const inp=document.createElement('input');inp.type='text';inp.className='locinput';
+      inp.placeholder='Google-Maps-Link oder „Breite, Länge"…';
+      const btn=document.createElement('button');btn.className='locbtn';btn.textContent='Setzen';
+      const setIt=()=>{
+        const v=inp.value.trim();
+        if(!v){ if(has){ delete d[latKey]; delete d[lonKey]; d.ts=now(); save(); renderDays(); } return; }
+        const g2=parseGeo(v);
+        if(!g2 || Math.abs(g2.lat)>90 || Math.abs(g2.lon)>180){
+          alert('Konnte keine Koordinaten erkennen.\n\nTipp: In Google Maps die Adresszeile kopieren (enthält @Breite,Länge) – kurze „Teilen"-Links funktionieren nicht. Oder direkt „Breite, Länge", z. B. 67.9, 13.1');
+          return;
+        }
+        d[latKey]=g2.lat; d[lonKey]=g2.lon;
+        const nm=parseName(v); if(nm && !(d.title||'').trim()) d.title=nm;
+        d.ts=now(); save(); renderDays(); focusDay(d.num);
+      };
+      btn.onclick=setIt; inp.onkeydown=e=>{if(e.key==='Enter')setIt();};
+      row.appendChild(tag);row.appendChild(inp);row.appendChild(btn);
+      if(has){ const rb=document.createElement('button');rb.className='locreset';rb.textContent='↺';rb.title='Auf Standard zurücksetzen';
+        rb.onclick=()=>{ delete d[latKey]; delete d[lonKey]; d.ts=now(); save(); renderDays(); }; row.appendChild(rb); }
+      return row;
     };
-    locBtn.onclick=setLoc; locInput.onkeydown=e=>{if(e.key==='Enter')setLoc();};
-    locRow.appendChild(locLabel);locRow.appendChild(locInput);locRow.appendChild(locBtn);
-    if(hasCustom){
-      const resetBtn=document.createElement('button');resetBtn.className='locreset';resetBtn.textContent='↺';
-      resetBtn.title='Auf Standard-Standort zurücksetzen';
-      resetBtn.onclick=()=>{ delete d.lat; delete d.lon; d.ts=now(); save(); renderDays(); };
-      locRow.appendChild(resetBtn);
-    }
-    div.appendChild(locRow);
+    div.appendChild(locField('Start','sLat','sLon',true));
+    div.appendChild(locField('Ende','eLat','eLon',!!defEnd(d.num)));
 
     // Einträge + Unterpunkte
     const ul=document.createElement('ul');ul.className='items';
@@ -853,7 +891,7 @@ function renderDays(){
       const sum=document.createElement('span');sum.className='votesum';
       const vals=[];
       ['Sören','Flo','Sarah'].forEach(p=>{const val=s.votes[p];if(val)vals.push(val);
-        const chip=document.createElement('span');chip.className='votechip';chip.style.background=PEOPLE[p];
+        const chip=document.createElement('span');chip.className='votechip';chip.style.background=PEOPLE[p];chip.style.color=textOn(PEOPLE[p]);
         chip.textContent=p[0]+(val?' '+val:' –');sum.appendChild(chip);});
       if(vals.length){const avg=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
         const av=document.createElement('span');av.className='voteavg';av.textContent='Ø '+avg+' ★';sum.appendChild(av);}
@@ -917,7 +955,7 @@ function renderBudget(){
     const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';row.appendChild(eur);
     const who=document.createElement('select');who.className='expwho';
     TRIO.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(e.payer===p)o.selected=true;who.appendChild(o);});
-    who.style.background=PEOPLE[e.payer]||'var(--panel2)';who.style.color=PEOPLE[e.payer]?'#0f1720':'var(--text)';
+    who.style.background=PEOPLE[e.payer]||'var(--panel2)';who.style.color=PEOPLE[e.payer]?textOn(PEOPLE[e.payer]):'var(--text)';
     who.onchange=()=>{e.payer=who.value;e.ts=now();save();renderBudget();};
     row.appendChild(who);
     const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Ausgabe löschen';
@@ -941,7 +979,7 @@ function renderBudget(){
     if(debt[i].v<0.005)i++; if(cred[j].v<0.005)j++;
   }
   let html='<div class="budtotals"><b>Gesamt:</b> '+total.toFixed(2)+' €  ·  <b>pro Person:</b> '+share.toFixed(2)+' €</div>';
-  html+='<div class="budpaid">'+TRIO.map(p=>'<span class="budchip" style="background:'+PEOPLE[p]+'">'+p+': '+paid[p].toFixed(2)+' €</span>').join('')+'</div>';
+  html+='<div class="budpaid">'+TRIO.map(p=>'<span class="budchip" style="background:'+PEOPLE[p]+';color:'+textOn(PEOPLE[p])+'">'+p+': '+paid[p].toFixed(2)+' €</span>').join('')+'</div>';
   if(settle.length){ html+='<div class="budsettle"><b>Ausgleich:</b><br>'+settle.join('<br>')+'</div>'; }
   else if(total>0){ html+='<div class="budsettle">Alles ausgeglichen ✓</div>'; }
   sum.innerHTML=html;
