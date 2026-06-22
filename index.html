@@ -69,6 +69,40 @@
   .day.hide{display:none}
   .ddate{font-size:.8rem;color:var(--muted)}
   .dtag{font-size:.7rem;padding:2px 8px;border-radius:10px;color:#0f1720;font-weight:700;white-space:nowrap}
+  .phasesel{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:10px;border:1px solid var(--line);
+    cursor:pointer;font-family:inherit;outline:none}
+  .phasesel option{background:var(--panel);color:var(--text);font-weight:600}
+  .locrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px}
+  .loclabel{font-size:.74rem;color:var(--muted);white-space:nowrap;min-width:120px}
+  .locinput{flex:1;min-width:150px;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:5px 9px;font-size:.82rem;font-family:inherit}
+  .locinput:focus{outline:none;border-color:var(--accent)}
+  .locbtn{background:var(--panel2);border:1px solid var(--accent);color:var(--accent);border-radius:8px;
+    padding:5px 12px;font-size:.8rem;cursor:pointer;font-weight:600}
+  .locbtn:hover{background:var(--accent);color:#0f1720}
+  .locreset{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:5px 9px;font-size:.85rem;cursor:pointer}
+  .locreset:hover{border-color:var(--accent);color:var(--accent)}
+  /* Übernachtung / Camping */
+  .staybox{margin:6px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;background:rgba(72,187,120,.05)}
+  .stayhead{font-size:.85rem;font-weight:700;color:#7fd1a3;margin-bottom:8px}
+  .stay{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:8px}
+  .stayrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .stayname{flex:1;min-width:120px;font-weight:600;font-size:.92rem;cursor:text;border-radius:4px;padding:1px 4px}
+  .stayprice{min-width:60px;color:var(--accent2);font-weight:600;font-size:.85rem;cursor:text;border-radius:4px;padding:1px 4px}
+  .stayname:focus,.stayprice:focus{background:rgba(79,209,197,.10);box-shadow:0 0 0 1px var(--accent)}
+  .staylink{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:4px 8px;font-size:.8rem;font-family:inherit}
+  .staylink:focus{outline:none;border-color:var(--accent)}
+  .stayvote{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .votelbl{font-size:.74rem;color:var(--muted)}
+  .stars{font-size:1.05rem;letter-spacing:1px;cursor:pointer;user-select:none}
+  .star{color:#465064;transition:color .1s}
+  .star.on{color:#f6c945}
+  .star:hover{color:#f6c945}
+  .votesum{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-left:auto}
+  .votechip{font-size:.68rem;font-weight:700;color:#0f1720;border-radius:9px;padding:1px 7px;white-space:nowrap}
+  .voteavg{font-size:.74rem;font-weight:700;color:#f6c945;white-space:nowrap}
   .droute{font-weight:700;font-size:1.05rem;margin:2px 0}
   .ddist{font-size:.82rem;color:var(--accent2)}
   .ddesc{color:var(--muted);font-size:.9rem;margin:6px 0 10px}
@@ -272,7 +306,7 @@ const DAYS = [
    hl:["Check-in 90 Min vorher","Kabine beziehen"],ll:[58.90,17.95]},
   {n:24,date:"Mo 7. Sep",phase:"p6",route:"Ankunft Gdansk → Süden",dist:"Fähre + ~600 km",
    desc:"Ankunft Gdansk mittags, kurzer Altstadtbummel, dann durch Polen Richtung Süden.",
-   hl:["Langer Markt Gdansk","Altstadt-Mittagessen"],ll:[50.08,17.0]},
+   hl:["Langer Markt Gdansk","Altstadt-Mittagessen"],ll:[54.35,18.65]},
   {n:25,date:"Di 8. Sep",phase:"p6",route:"Tschechien → Richtung Heimat",dist:"~550 km · 6 h",
    desc:"Durch Tschechien/Bayern, letzte Übernachtung.",
    hl:["Gemütlicher Abschlussabend"],ll:[49.19,16.61]},
@@ -325,7 +359,7 @@ if(!state || !state.plan){
   state = old3 ? migrate(old3) : seed();
   saveLocal();
 }
-state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
+state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.stays=d.stays||[]; d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
 state.pack.forEach(p=>{ if(p.ts==null)p.ts=1; });
 
 // ---------- Merge (mehrere Geräte zusammenführen, neuere Änderung gewinnt) ----------
@@ -338,7 +372,15 @@ function mergeArr(a,b,fn){
 }
 function mergeSub(s1,s2){ return newer(s1,s2); }
 function mergeItem(i1,i2){ const b={...newer(i1,i2)}; b.subs=mergeArr(i1.subs||[],i2.subs||[],mergeSub); return b; }
-function mergeDay(d1,d2){ const b={...newer(d1,d2)}; b.items=mergeArr(d1.items||[],d2.items||[],mergeItem); return b; }
+function mergeStay(s1,s2){ // Stimmen pro Person nach eigenem Zeitstempel zusammenführen
+  const b={...newer(s1,s2)};
+  const v1=s1.votes||{},v2=s2.votes||{},t1=s1.votesTs||{},t2=s2.votesTs||{},v={},vt={};
+  new Set([...Object.keys(v1),...Object.keys(v2)]).forEach(k=>{
+    if((t2[k]||0)>=(t1[k]||0)){ v[k]=v2[k]; vt[k]=t2[k]||0; } else { v[k]=v1[k]; vt[k]=t1[k]||0; }
+  });
+  b.votes=v; b.votesTs=vt; return b;
+}
+function mergeDay(d1,d2){ const b={...newer(d1,d2)}; b.items=mergeArr(d1.items||[],d2.items||[],mergeItem); b.stays=mergeArr(d1.stays||[],d2.stays||[],mergeStay); return b; }
 function mergePack(p1,p2){ return newer(p1,p2); }
 function mergeState(a,b){
   return {
@@ -389,10 +431,11 @@ function paintSyncUI(){
 // ---------- Selbst-enthaltene SVG-Routenkarte ----------
 const NS="http://www.w3.org/2000/svg";
 const mapEl=document.getElementById('map');
-const latMax=71.8, lonMin=4.0, kLat=29, latMid=60;
-const kLon=kLat*Math.cos(latMid*Math.PI/180), pad=44;
-function proj(ll){return [pad+(ll[1]-lonMin)*kLon, pad+(latMax-ll[0])*kLat];}
-const P=DAYS.map(d=>proj(d.ll));
+// Echte Mercator-Projektion (geografisch korrekt) – ll = [lat, lon]
+const D2R=Math.PI/180, pad=44, MSCALE=1700, lonMin=4.0, latMax=71.9;
+function mY(latDeg){return Math.log(Math.tan(Math.PI/4 + latDeg*D2R/2));}
+const xLeft=lonMin*D2R, yTop=mY(latMax);
+function proj(ll){return [ pad+(ll[1]*D2R - xLeft)*MSCALE, pad+(yTop - mY(ll[0]))*MSCALE ]; }
 
 // Echte (vereinfachte) Länderumrisse – GeoJSON [lon,lat], fest eingebettet (Quelle: Natural Earth)
 const RINGS=[
@@ -412,11 +455,10 @@ const RINGS=[
 const landPaths=RINGS.map(ring=>"M"+ring.map(pt=>{const p=proj([pt[1],pt[0]]);return p[0].toFixed(1)+","+p[1].toFixed(1);}).join("L")+"Z");
 
 let vbW=0,vbH=0;
-P.forEach(p=>{vbW=Math.max(vbW,p[0]);vbH=Math.max(vbH,p[1]);});
-RINGS.forEach(ring=>ring.forEach(pt=>{const p=proj([pt[1],pt[0]]);vbW=Math.max(vbW,p[0]);vbH=Math.max(vbH,p[1]);}));
+function ext(p){vbW=Math.max(vbW,p[0]);vbH=Math.max(vbH,p[1]);}
+RINGS.forEach(ring=>ring.forEach(pt=>ext(proj([pt[1],pt[0]]))));
+DAYS.forEach(d=>ext(proj(d.ll)));
 vbW+=pad; vbH+=pad;
-const LABELS={1:"Wörgl",2:"Oslo",4:"Bergen",6:"Geiranger",8:"Trondheim",
-  10:"Bodø",11:"Lofoten",14:"Tromsø",16:"NORDKAP",19:"Rovaniemi",21:"Stockholm",24:"Gdansk"};
 const svg=document.createElementNS(NS,"svg");
 svg.setAttribute("viewBox",`0 0 ${vbW} ${vbH}`);
 svg.setAttribute("preserveAspectRatio","xMidYMid meet");
@@ -438,42 +480,57 @@ landPaths.forEach(d=>{
   pa.setAttribute("stroke-linejoin","round");
   g.appendChild(pa);
 });
-for(let i=0;i<P.length-1;i++){
-  const ln=document.createElementNS(NS,"line");
-  ln.setAttribute("x1",P[i][0]);ln.setAttribute("y1",P[i][1]);
-  ln.setAttribute("x2",P[i+1][0]);ln.setAttribute("y2",P[i+1][1]);
-  ln.setAttribute("stroke",PHASES[DAYS[i+1].phase].color);
-  ln.setAttribute("stroke-width","2.6");ln.setAttribute("stroke-linecap","round");ln.setAttribute("opacity","0.9");
-  g.appendChild(ln);
+// Routen-Ebene – wird datengesteuert aus state.plan aufgebaut
+const routeLayer=document.createElementNS(NS,"g");
+g.appendChild(routeLayer);
+const mapNodes={};
+function defLL(num){const dd=DAYS.find(x=>x.n===num);return dd?dd.ll:null;}
+function coordsOf(d){ if(typeof d.lat==='number' && typeof d.lon==='number') return [d.lat,d.lon]; return defLL(d.num); }
+function parseGeo(s){
+  if(!s)return null;
+  let m=s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/); if(m)return {lat:+m[1],lon:+m[2]};
+  m=s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/); if(m)return {lat:+m[1],lon:+m[2]};
+  m=s.match(/[?&](?:q|ll|sll|daddr|destination|center)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/); if(m)return {lat:+m[1],lon:+m[2]};
+  m=s.match(/^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/); if(m)return {lat:+m[1],lon:+m[2]};
+  return null;
 }
-DAYS.forEach((d,i)=>{
-  const c=PHASES[d.phase].color, x=P[i][0], y=P[i][1];
-  const node=document.createElementNS(NS,"g");
-  node.setAttribute("class","node");node.setAttribute("id","node-"+d.n);
-  const ring=document.createElementNS(NS,"circle");
-  ring.setAttribute("class","ring");ring.setAttribute("cx",x);ring.setAttribute("cy",y);
-  ring.setAttribute("r","9");ring.setAttribute("fill","none");ring.setAttribute("stroke",c);
-  ring.setAttribute("stroke-width","2");ring.setAttribute("opacity","0");
-  const dot=document.createElementNS(NS,"circle");
-  dot.setAttribute("class","dot");dot.setAttribute("cx",x);dot.setAttribute("cy",y);
-  dot.setAttribute("r","8");dot.setAttribute("fill",c);dot.setAttribute("stroke","#0f1720");dot.setAttribute("stroke-width","2");
-  const t=document.createElementNS(NS,"text");
-  t.setAttribute("x",x);t.setAttribute("y",y+3.2);t.setAttribute("text-anchor","middle");
-  t.setAttribute("font-size","8");t.setAttribute("font-weight","700");t.setAttribute("fill","#0f1720");t.textContent=d.n;
-  node.append(ring,dot,t);
-  if(LABELS[d.n]){
-    const lab=document.createElementNS(NS,"text");
-    lab.setAttribute("x",x+12);lab.setAttribute("y",y+3.5);
-    lab.setAttribute("font-size","11");lab.setAttribute("font-weight",d.n===16?"800":"600");
-    lab.setAttribute("fill",d.n===16?"#f56565":"#e7eef6");
-    lab.textContent=(d.n===16?"🎯 ":"")+LABELS[d.n];
-    node.appendChild(lab);
+function parseName(s){ const m=s.match(/\/place\/([^\/@?]+)/); if(!m)return null;
+  try{ return decodeURIComponent(m[1].replace(/\+/g,' ')).trim(); }catch(e){ return null; } }
+function renderMap(){
+  while(routeLayer.firstChild) routeLayer.removeChild(routeLayer.firstChild);
+  for(const k in mapNodes) delete mapNodes[k];
+  const days=state.plan.filter(d=>!d.deleted && coordsOf(d)).sort((a,b)=>(a.num||0)-(b.num||0));
+  for(let i=0;i<days.length-1;i++){
+    const a=proj(coordsOf(days[i])), b=proj(coordsOf(days[i+1]));
+    const ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",a[0]);ln.setAttribute("y1",a[1]);ln.setAttribute("x2",b[0]);ln.setAttribute("y2",b[1]);
+    const ph=PHASES[days[i+1].phase]; ln.setAttribute("stroke",ph?ph.color:'#7a8aa0');
+    ln.setAttribute("stroke-width","2.6");ln.setAttribute("stroke-linecap","round");ln.setAttribute("opacity","0.9");
+    routeLayer.appendChild(ln);
   }
-  node.addEventListener('click',e=>{e.stopPropagation();scrollToDay(d.n);});
-  node.addEventListener('mousemove',e=>showTip(e,`Tag ${d.n} · ${d.date} — ${d.route}`));
-  node.addEventListener('mouseleave',hideTip);
-  g.appendChild(node);
-});
+  days.forEach(d=>{
+    const ph=PHASES[d.phase], c=ph?ph.color:'#7a8aa0';
+    const p=proj(coordsOf(d)), x=p[0], y=p[1];
+    const node=document.createElementNS(NS,"g");
+    node.setAttribute("class","node");node.setAttribute("id","node-"+d.num);
+    const ring=document.createElementNS(NS,"circle");
+    ring.setAttribute("class","ring");ring.setAttribute("cx",x);ring.setAttribute("cy",y);
+    ring.setAttribute("r","9");ring.setAttribute("fill","none");ring.setAttribute("stroke",c);ring.setAttribute("stroke-width","2");ring.setAttribute("opacity","0");
+    const dot=document.createElementNS(NS,"circle");
+    dot.setAttribute("class","dot");dot.setAttribute("cx",x);dot.setAttribute("cy",y);
+    dot.setAttribute("r","8");dot.setAttribute("fill",c);dot.setAttribute("stroke","#0f1720");dot.setAttribute("stroke-width","2");
+    const t=document.createElementNS(NS,"text");
+    t.setAttribute("x",x);t.setAttribute("y",y+3.2);t.setAttribute("text-anchor","middle");t.setAttribute("font-size","8");t.setAttribute("font-weight","700");t.setAttribute("fill","#0f1720");t.textContent=d.num;
+    node.append(ring,dot,t);
+    const nm=(d.title||'').trim();
+    node.addEventListener('click',e=>{e.stopPropagation();scrollToDay(d.num);});
+    node.addEventListener('mousemove',e=>showTip(e,'Tag '+d.num+(nm?' · '+nm:'')));
+    node.addEventListener('mouseleave',hideTip);
+    routeLayer.appendChild(node);
+    mapNodes[d.num]=node;
+  });
+}
+renderMap();
 mapEl.appendChild(svg);
 const tip=document.createElement('div');tip.className='mtip';mapEl.appendChild(tip);
 function showTip(e,txt){const r=mapEl.getBoundingClientRect();
@@ -592,7 +649,12 @@ function renderDays(){
     numWrap.appendChild(numIn);left.appendChild(numWrap);
     left.appendChild(document.createTextNode(' · '));
     left.appendChild(mkEditable(d.date,'ddate-ed',v=>{d.date=v;d.ts=now();save();},'Datum'));
-    if(ph){const tag=document.createElement('span');tag.className='dtag';tag.style.background=ph.color;tag.textContent=ph.name;left.appendChild(tag);}
+    const sel=document.createElement('select');sel.className='phasesel';sel.title='Reisephase wählen';
+    const optNone=document.createElement('option');optNone.value='';optNone.textContent='— Phase —';sel.appendChild(optNone);
+    Object.entries(PHASES).forEach(([id,p])=>{const o=document.createElement('option');o.value=id;o.textContent=p.name;if(d.phase===id)o.selected=true;sel.appendChild(o);});
+    if(ph){sel.style.background=ph.color;sel.style.color='#0f1720';}else{sel.style.background='var(--panel2)';sel.style.color='var(--muted)';}
+    sel.onchange=()=>{d.phase=sel.value||null;d.ts=now();save();renderDays();};
+    left.appendChild(sel);
     head.appendChild(left);
     const ctrls=document.createElement('div');ctrls.className='dctrls';
     const mapB=document.createElement('button');mapB.className='mapbtn';mapB.textContent='🗺 Auf Karte';
@@ -609,6 +671,37 @@ function renderDays(){
     meta.appendChild(mkEditable(d.dist,'ddist-ed',v=>{d.dist=v;d.ts=now();save();},'Distanz / Fahrzeit'));
     div.appendChild(meta);
     div.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
+
+    // Standort (Google-Maps-Link oder Koordinaten) – verschiebt den Punkt auf der Karte
+    const locRow=document.createElement('div');locRow.className='locrow';
+    const hasCustom=(typeof d.lat==='number');
+    const cur=coordsOf(d);
+    const locLabel=document.createElement('span');locLabel.className='loclabel';
+    locLabel.textContent = hasCustom ? ('📌 '+d.lat.toFixed(4)+', '+d.lon.toFixed(4)) : (cur?'📍 Standard-Standort':'⚠ kein Standort');
+    const locInput=document.createElement('input');locInput.type='text';locInput.className='locinput';
+    locInput.placeholder='Google-Maps-Link oder „Breite, Länge" einfügen…';
+    const locBtn=document.createElement('button');locBtn.className='locbtn';locBtn.textContent='Setzen';
+    const setLoc=()=>{
+      const v=locInput.value.trim();
+      if(!v){ if(hasCustom){ delete d.lat; delete d.lon; d.ts=now(); save(); renderDays(); } return; }
+      const g2=parseGeo(v);
+      if(!g2 || Math.abs(g2.lat)>90 || Math.abs(g2.lon)>180){
+        alert('Konnte keine Koordinaten erkennen.\n\nTipp: In Google Maps oben die Adresszeile kopieren (enthält @Breite,Länge) – kurze „Teilen"-Links funktionieren leider nicht. Oder Koordinaten direkt eingeben, z. B. 67.9, 13.1');
+        return;
+      }
+      d.lat=g2.lat; d.lon=g2.lon;
+      const nm=parseName(v); if(nm && !(d.title||'').trim()) d.title=nm;
+      d.ts=now(); save(); renderDays(); focusDay(d.num);
+    };
+    locBtn.onclick=setLoc; locInput.onkeydown=e=>{if(e.key==='Enter')setLoc();};
+    locRow.appendChild(locLabel);locRow.appendChild(locInput);locRow.appendChild(locBtn);
+    if(hasCustom){
+      const resetBtn=document.createElement('button');resetBtn.className='locreset';resetBtn.textContent='↺';
+      resetBtn.title='Auf Standard-Standort zurücksetzen';
+      resetBtn.onclick=()=>{ delete d.lat; delete d.lon; d.ts=now(); save(); renderDays(); };
+      locRow.appendChild(resetBtn);
+    }
+    div.appendChild(locRow);
 
     // Einträge + Unterpunkte
     const ul=document.createElement('ul');ul.className='items';
@@ -652,12 +745,63 @@ function renderDays(){
     btn.onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go();};
     add.appendChild(inp);add.appendChild(btn);div.appendChild(add);
 
+    // 🏕 Übernachtung / Camping (mehrere Optionen, Preis, Link, Bewertung)
+    const stayBox=document.createElement('div');stayBox.className='staybox';
+    const sh=document.createElement('div');sh.className='stayhead';sh.textContent='🏕 Übernachtung / Camping';
+    stayBox.appendChild(sh);
+    (d.stays||[]).filter(s=>!s.deleted).forEach(s=>{
+      s.votes=s.votes||{}; s.votesTs=s.votesTs||{};
+      const card=document.createElement('div');card.className='stay';
+      const r1=document.createElement('div');r1.className='stayrow';
+      r1.appendChild(mkEditable(s.name,'stayname',v=>{s.name=v;s.ts=now();save();},'Name / Campingplatz…'));
+      r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();},'Preis €'));
+      const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Option löschen';
+      sdel.onclick=()=>{s.deleted=true;s.ts=now();save();renderDays();};
+      r1.appendChild(sdel);card.appendChild(r1);
+      const r2=document.createElement('div');r2.className='stayrow';
+      const linkIn=document.createElement('input');linkIn.type='text';linkIn.className='staylink';linkIn.value=s.url||'';linkIn.placeholder='Link (https://…)';
+      linkIn.onchange=()=>{s.url=linkIn.value.trim();s.ts=now();save();renderDays();};
+      r2.appendChild(linkIn);
+      const open=document.createElement('button');open.className='locbtn';open.textContent='↗ Öffnen';
+      open.onclick=()=>{let u=(s.url||'').trim();if(!u)return;if(!/^https?:\/\//i.test(u))u='https://'+u;window.open(u,'_blank','noopener');};
+      r2.appendChild(open);card.appendChild(r2);
+      const r3=document.createElement('div');r3.className='stayvote';
+      const lbl=document.createElement('span');lbl.className='votelbl';lbl.textContent='Meine Wertung:';r3.appendChild(lbl);
+      const stars=document.createElement('span');stars.className='stars';
+      for(let n=1;n<=5;n++){
+        const st=document.createElement('span');st.className='star'+(((s.votes[ME]||0)>=n)?' on':'');st.textContent='★';
+        st.onclick=()=>{s.votes[ME]=(s.votes[ME]===n?0:n);s.votesTs=s.votesTs||{};s.votesTs[ME]=now();s.ts=now();save();renderDays();};
+        stars.appendChild(st);
+      }
+      r3.appendChild(stars);
+      const sum=document.createElement('span');sum.className='votesum';
+      const vals=[];
+      ['Sören','Flo','Sarah'].forEach(p=>{const val=s.votes[p];if(val)vals.push(val);
+        const chip=document.createElement('span');chip.className='votechip';chip.style.background=PEOPLE[p];
+        chip.textContent=p[0]+(val?' '+val:' –');sum.appendChild(chip);});
+      if(vals.length){const avg=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+        const av=document.createElement('span');av.className='voteavg';av.textContent='Ø '+avg+' ★';sum.appendChild(av);}
+      r3.appendChild(sum);card.appendChild(r3);
+      stayBox.appendChild(card);
+    });
+    const addS=document.createElement('div');addS.className='additem';
+    const sInp=document.createElement('input');sInp.type='text';sInp.placeholder='Übernachtungs-Option hinzufügen…';
+    const sBtn=document.createElement('button');sBtn.textContent='+ Option';
+    const addStay=()=>{const v=sInp.value.trim();if(!v)return;
+      (d.stays=d.stays||[]).push({id:uid(),ts:now(),name:v,price:'',url:'',author:ME,votes:{},votesTs:{}});
+      save();renderDays();
+      setTimeout(()=>{const el=document.getElementById('day-'+d.num);if(el){const i=el.querySelector('.staybox .additem input');i&&i.focus();}},0);};
+    sBtn.onclick=addStay;sInp.onkeydown=e=>{if(e.key==='Enter')addStay();};
+    addS.appendChild(sInp);addS.appendChild(sBtn);stayBox.appendChild(addS);
+    div.appendChild(stayBox);
+
     dayWrap.appendChild(div);
   });
+  renderMap();
 }
 function addDay(){
   const maxNum=state.plan.reduce((m,d)=>Math.max(m,d.num||0),0);
-  const nd={id:uid(),ts:now(),num:maxNum+1,phase:null,date:'',title:'',dist:'',desc:'',items:[]};
+  const nd={id:uid(),ts:now(),num:maxNum+1,phase:null,date:'',title:'',dist:'',desc:'',items:[],stays:[]};
   state.plan.push(nd);save();renderDays();
   setTimeout(()=>{const el=document.getElementById('day-'+nd.num);
     if(el){el.scrollIntoView({behavior:'smooth',block:'center'});const t=el.querySelector('.droute-ed');t&&t.focus();}},0);
