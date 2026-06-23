@@ -92,7 +92,7 @@
   .locname-ed:focus{box-shadow:0 0 0 1px var(--accent);border-bottom-color:transparent;background:rgba(127,140,160,.12)}
   .locarrow{color:var(--muted);margin:0 2px}
   /* Lösch-Dialog im App-Stil */
-  .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
   .modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px;max-width:360px;width:100%;
     box-shadow:0 14px 44px rgba(0,0,0,.5)}
   .modal-title{font-weight:700;font-size:1.02rem;margin-bottom:8px;color:var(--text)}
@@ -103,6 +103,7 @@
   .modal-btn:hover{border-color:var(--accent)}
   .modal-btn.danger{background:var(--p4);border-color:var(--p4);color:#fff}
   .modal-btn.danger:hover{filter:brightness(1.08)}
+  .modal-btn:disabled{opacity:.55;cursor:default}
   /* Übernachtung / Camping */
   .staybox{margin:6px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;background:rgba(72,187,120,.05)}
   .stayhead{font-size:.85rem;font-weight:700;color:#7fd1a3;margin-bottom:8px}
@@ -346,7 +347,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 12</span>
+  <span style="opacity:.6">App-Version 13</span>
 </footer>
 
 <script>
@@ -401,12 +402,17 @@ function confirmBox(msg, onOk){
   const row=document.createElement('div');row.className='modal-row';
   const cancel=document.createElement('button');cancel.className='modal-btn';cancel.textContent='Abbrechen';
   const ok=document.createElement('button');ok.className='modal-btn danger';ok.textContent='Löschen';
-  const close=()=>{ov.remove();document.removeEventListener('keydown',key);};
-  const key=e=>{ if(e.key==='Escape')close(); else if(e.key==='Enter'){close();onOk();} };
+  const close=()=>{ if(ov.parentNode) ov.remove(); document.removeEventListener('keydown',key); };
+  const key=e=>{ if(e.key==='Escape')close(); else if(e.key==='Enter' && armed){close();onOk();} };
   cancel.onclick=close; ok.onclick=()=>{close();onOk();};
-  ov.onclick=e=>{ if(e.target===ov)close(); };
+  box.onclick=e=>e.stopPropagation();
+  let armed=false; // kurze Sperre gegen versehentliches Sofort-Schließen (Ghost-Tap)
+  cancel.disabled=true; ok.disabled=true;
+  setTimeout(()=>{ armed=true; cancel.disabled=false; ok.disabled=false; }, 350);
+  ov.onclick=e=>{ if(armed && e.target===ov) close(); };
   document.addEventListener('keydown',key);
-  row.append(cancel,ok); box.append(ti,m,row); ov.append(box); document.body.appendChild(ov); ok.focus();
+  row.append(cancel,ok); box.append(ti,m,row); ov.append(box); document.body.appendChild(ov);
+  setTimeout(()=>{ try{ ok.focus(); }catch(_){ } }, 360);
 }
 
 const DAYS = [
