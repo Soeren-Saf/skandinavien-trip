@@ -357,7 +357,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 17</span>
+  <span style="opacity:.6">App-Version 18</span>
 </footer>
 
 <script>
@@ -868,6 +868,24 @@ function doReorder(arr, moved, target, before){
   let ti=arr.indexOf(target); if(ti<0) ti=arr.length;
   arr.splice(before?ti:ti+1, 0, moved);
 }
+function clearDropMarks(c){ (c||document).querySelectorAll('.drop-top,.drop-bot').forEach(x=>x.classList.remove('drop-top','drop-bot')); }
+// hängt einen Ziehgriff (☰) an ein <li> und macht die Liste per Drag&Drop sortierbar
+function attachDnD(li, arr, el, redraw){
+  li.draggable=false;
+  const h=document.createElement('span');h.className='draghandle';h.textContent='☰';h.title='Ziehen zum Verschieben';
+  h.addEventListener('mousedown',()=>{ li.draggable=true;
+    const off=()=>{ li.draggable=false; document.removeEventListener('mouseup',off); };
+    document.addEventListener('mouseup',off); });
+  li.addEventListener('dragstart',e=>{ dragging=true; dragCtx={arr,el}; li.classList.add('dragging');
+    if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain','');}catch(_){ } } });
+  li.addEventListener('dragend',()=>{ dragging=false; li.draggable=false; li.classList.remove('dragging'); clearDropMarks(li.parentNode); });
+  li.addEventListener('dragover',e=>{ if(!dragCtx||dragCtx.arr!==arr||dragCtx.el===el)return; e.preventDefault();
+    clearDropMarks(li.parentNode); li.classList.add(dropBefore(li,e)?'drop-top':'drop-bot'); });
+  li.addEventListener('dragleave',()=>{ li.classList.remove('drop-top','drop-bot'); });
+  li.addEventListener('drop',e=>{ if(!dragCtx||dragCtx.arr!==arr)return; e.preventDefault();
+    const before=dropBefore(li,e); doReorder(arr,dragCtx.el,el,before); dragging=false; clearDropMarks(li.parentNode); save(); (redraw||renderDays)(); });
+  return h;
+}
 function mkEditable(text,cls,onSave,ph){
   const el=document.createElement('span');
   el.className=cls;el.contentEditable="true";el.spellcheck=false;el.textContent=text||'';
@@ -929,27 +947,10 @@ function renderDays(){
 
     // === Einträge & Unterpunkte (Ziehgriff zum Sortieren) ===
     const ul=document.createElement('ul');ul.className='items';
-    const clearDrop=()=>ul.querySelectorAll('.drop-top,.drop-bot').forEach(x=>x.classList.remove('drop-top','drop-bot'));
-    function dndHandle(li, arr, el){
-      li.draggable=false;
-      const h=document.createElement('span');h.className='draghandle';h.textContent='☰';h.title='Ziehen zum Verschieben';
-      h.addEventListener('mousedown',()=>{ li.draggable=true;
-        const off=()=>{ li.draggable=false; document.removeEventListener('mouseup',off); };
-        document.addEventListener('mouseup',off); });
-      li.addEventListener('dragstart',e=>{ dragging=true; dragCtx={arr,el}; li.classList.add('dragging');
-        if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain','');}catch(_){ } } });
-      li.addEventListener('dragend',()=>{ dragging=false; li.draggable=false; li.classList.remove('dragging'); clearDrop(); });
-      li.addEventListener('dragover',e=>{ if(!dragCtx||dragCtx.arr!==arr||dragCtx.el===el)return; e.preventDefault();
-        clearDrop(); li.classList.add(dropBefore(li,e)?'drop-top':'drop-bot'); });
-      li.addEventListener('dragleave',()=>{ li.classList.remove('drop-top','drop-bot'); });
-      li.addEventListener('drop',e=>{ if(!dragCtx||dragCtx.arr!==arr)return; e.preventDefault();
-        const before=dropBefore(li,e); doReorder(arr,dragCtx.el,el,before); dragging=false; clearDrop(); save(); renderDays(); });
-      return h;
-    }
     (d.items||[]).filter(it=>!it.deleted).forEach(it=>{
       if(!it.subs)it.subs=[];
       const li=document.createElement('li');li.className='item'+(it.done?' checked':'');
-      li.appendChild(dndHandle(li,d.items,it));
+      li.appendChild(attachDnD(li,d.items,it,renderDays));
       const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!it.done;
       cb.onchange=()=>{it.done=cb.checked;it.ts=now();save();renderDays();};
       li.appendChild(cb);
@@ -965,7 +966,7 @@ function renderDays(){
       ul.appendChild(li);
       it.subs.filter(su=>!su.deleted).forEach(su=>{
         const sli=document.createElement('li');sli.className='subitem'+(su.done?' checked':'');
-        sli.appendChild(dndHandle(sli,it.subs,su));
+        sli.appendChild(attachDnD(sli,it.subs,su,renderDays));
         const scb=document.createElement('input');scb.type='checkbox';scb.checked=!!su.done;
         scb.onchange=()=>{su.done=scb.checked;su.ts=now();save();renderDays();};
         sli.appendChild(scb);
@@ -1058,9 +1059,17 @@ const packUl=document.getElementById('packlist');
 function renderPack(){
   packUl.innerHTML='';
   state.pack.filter(it=>!it.deleted).forEach(it=>{
-    packUl.appendChild(itemRow(it,
-      ()=>{it.done=!it.done;it.ts=now();save();renderPack();},
-      ()=>{it.deleted=true;it.ts=now();save();renderPack();}));
+    const li=document.createElement('li');li.className='item'+(it.done?' checked':'');
+    li.appendChild(attachDnD(li, state.pack, it, renderPack));
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!it.done;
+    cb.onchange=()=>{it.done=cb.checked;it.ts=now();save();renderPack();};
+    li.appendChild(cb);
+    li.appendChild(mkEditable(it.text,'txt-ed',v=>{it.text=v;it.ts=now();save();},'Eintrag…'));
+    li.appendChild(badgeEl(it.author));
+    const del=document.createElement('button');del.type='button';del.className='del';del.textContent='✕';del.title='Eintrag entfernen';
+    del.onclick=()=>{ it.deleted=true;it.ts=now();save();renderPack(); };
+    li.appendChild(del);
+    packUl.appendChild(li);
   });
 }
 function addPack(){
