@@ -87,6 +87,22 @@
   .locreset{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;
     padding:5px 9px;font-size:.85rem;cursor:pointer}
   .locreset:hover{border-color:var(--accent);color:var(--accent)}
+  .locline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;font-size:.85rem;color:var(--muted)}
+  .locname-ed{font-weight:600;color:var(--text);border-bottom:1px dashed var(--line);border-radius:4px;padding:1px 6px;cursor:text;outline:none}
+  .locname-ed:focus{box-shadow:0 0 0 1px var(--accent);border-bottom-color:transparent;background:rgba(127,140,160,.12)}
+  .locarrow{color:var(--muted);margin:0 2px}
+  /* Lösch-Dialog im App-Stil */
+  .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px;max-width:360px;width:100%;
+    box-shadow:0 14px 44px rgba(0,0,0,.5)}
+  .modal-title{font-weight:700;font-size:1.02rem;margin-bottom:8px;color:var(--text)}
+  .modal-msg{color:var(--muted);font-size:.92rem;line-height:1.5;margin-bottom:18px}
+  .modal-row{display:flex;gap:10px;justify-content:flex-end}
+  .modal-btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;
+    padding:9px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .modal-btn:hover{border-color:var(--accent)}
+  .modal-btn.danger{background:var(--p4);border-color:var(--p4);color:#fff}
+  .modal-btn.danger:hover{filter:brightness(1.08)}
   /* Übernachtung / Camping */
   .staybox{margin:6px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;background:rgba(72,187,120,.05)}
   .stayhead{font-size:.85rem;font-weight:700;color:#7fd1a3;margin-bottom:8px}
@@ -375,6 +391,22 @@ function applyColors(){
   r.setProperty('--onAccent', textOn(t.accent));
 }
 function applyPersonTheme(){ applyColors(); }
+// Lösch-Bestätigung im App-Stil (ersetzt das native confirm)
+function confirmBox(msg, onOk){
+  const ov=document.createElement('div');ov.className='modal-ov';
+  const box=document.createElement('div');box.className='modal-box';
+  const ti=document.createElement('div');ti.className='modal-title';ti.textContent='Wirklich löschen?';
+  const m=document.createElement('div');m.className='modal-msg';m.textContent=msg;
+  const row=document.createElement('div');row.className='modal-row';
+  const cancel=document.createElement('button');cancel.className='modal-btn';cancel.textContent='Abbrechen';
+  const ok=document.createElement('button');ok.className='modal-btn danger';ok.textContent='Löschen';
+  const close=()=>{ov.remove();document.removeEventListener('keydown',key);};
+  const key=e=>{ if(e.key==='Escape')close(); else if(e.key==='Enter'){close();onOk();} };
+  cancel.onclick=close; ok.onclick=()=>{close();onOk();};
+  ov.onclick=e=>{ if(e.target===ov)close(); };
+  document.addEventListener('keydown',key);
+  row.append(cancel,ok); box.append(ti,m,row); ov.append(box); document.body.appendChild(ov); ok.focus();
+}
 
 const DAYS = [
   {n:1,date:"Sa 15. Aug",phase:"p1",route:"Wörgl → Hamburg/Lübeck",dist:"~920 km · 9 h",
@@ -813,7 +845,6 @@ function mkEditable(text,cls,onSave,ph){
 function renderDays(){
   dayWrap.innerHTML='';
   const plan=state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0));
-  const legKm=tripLegs().legKm;
   plan.forEach(d=>{
     if(activeFilter!=='all' && activeFilter!==d.phase) return;
     const ph=PHASES[d.phase]; const col=ph?ph.color:'#7a8aa0';
@@ -841,7 +872,7 @@ function renderDays(){
     const mapB=document.createElement('button');mapB.className='mapbtn';mapB.textContent='🗺 Auf Karte';
     mapB.onclick=()=>focusDay(d.num);ctrls.appendChild(mapB);
     const delB=document.createElement('button');delB.className='delday';delB.textContent='✕ Tag';delB.title='Diesen Tag löschen';
-    delB.onclick=()=>{if(confirm('Tag '+d.num+' wirklich löschen?')){d.deleted=true;d.ts=now();save();renderDays();}};
+    delB.onclick=()=>{confirmBox('Tag '+d.num+(d.title?' („'+d.title+'")':'')+' mit allen Einträgen löschen?',()=>{d.deleted=true;d.ts=now();save();renderDays();});};
     ctrls.appendChild(delB);head.appendChild(ctrls);
     div.appendChild(head);
 
@@ -850,40 +881,17 @@ function renderDays(){
     const meta=document.createElement('div');meta.className='dmeta-ed';
     meta.appendChild(document.createTextNode('📍 '));
     meta.appendChild(mkEditable(d.dist,'ddist-ed',v=>{d.dist=v;d.ts=now();save();},'Distanz / Fahrzeit'));
-    if(legKm[d.num]){const auto=document.createElement('span');auto.className='autodist';
-      auto.textContent=' · 🚗 ≈ '+fmtKm(legKm[d.num])+' · '+fmtH(legKm[d.num]);meta.appendChild(auto);}
     div.appendChild(meta);
     div.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
 
-    // Standorte: Startpunkt & Endpunkt des Tages (Google-Maps-Link oder Koordinaten)
-    const locField=(label,latKey,lonKey,hasDefault)=>{
-      const row=document.createElement('div');row.className='locrow';
-      const has=(typeof d[latKey]==='number');
-      const tag=document.createElement('span');tag.className='loclabel';
-      tag.innerHTML='<b>'+label+':</b> '+(has?('📌 '+d[latKey].toFixed(4)+', '+d[lonKey].toFixed(4)):(hasDefault?'📍 Standard':'⚠ –'));
-      const inp=document.createElement('input');inp.type='text';inp.className='locinput';
-      inp.placeholder='Google-Maps-Link oder „Breite, Länge"…';
-      const btn=document.createElement('button');btn.className='locbtn';btn.textContent='Setzen';
-      const setIt=()=>{
-        const v=inp.value.trim();
-        if(!v){ if(has){ delete d[latKey]; delete d[lonKey]; d.ts=now(); save(); renderDays(); } return; }
-        const g2=parseGeo(v);
-        if(!g2 || Math.abs(g2.lat)>90 || Math.abs(g2.lon)>180){
-          alert('Konnte keine Koordinaten erkennen.\n\nTipp: In Google Maps die Adresszeile kopieren (enthält @Breite,Länge) – kurze „Teilen"-Links funktionieren nicht. Oder direkt „Breite, Länge", z. B. 67.9, 13.1');
-          return;
-        }
-        d[latKey]=g2.lat; d[lonKey]=g2.lon;
-        const nm=parseName(v); if(nm && !(d.title||'').trim()) d.title=nm;
-        d.ts=now(); save(); renderDays(); focusDay(d.num);
-      };
-      btn.onclick=setIt; inp.onkeydown=e=>{if(e.key==='Enter')setIt();};
-      row.appendChild(tag);row.appendChild(inp);row.appendChild(btn);
-      if(has){ const rb=document.createElement('button');rb.className='locreset';rb.textContent='↺';rb.title='Auf Standard zurücksetzen';
-        rb.onclick=()=>{ delete d[latKey]; delete d[lonKey]; d.ts=now(); save(); renderDays(); }; row.appendChild(rb); }
-      return row;
-    };
-    div.appendChild(locField('Start','sLat','sLon',true));
-    div.appendChild(locField('Ende','eLat','eLon',!!defEnd(d.num)));
+    // Start & Ende des Tages – einfach den Ort eintragen
+    const locLine=document.createElement('div');locLine.className='locline';
+    locLine.appendChild(document.createTextNode('🚩 Start: '));
+    locLine.appendChild(mkEditable(d.startTxt,'locname-ed',v=>{d.startTxt=v;d.ts=now();save();},'Startort…'));
+    const arrow=document.createElement('span');arrow.className='locarrow';arrow.textContent='→';locLine.appendChild(arrow);
+    locLine.appendChild(document.createTextNode('🏁 Ende: '));
+    locLine.appendChild(mkEditable(d.endTxt,'locname-ed',v=>{d.endTxt=v;d.ts=now();save();},'Zielort…'));
+    div.appendChild(locLine);
 
     // Einträge + Unterpunkte
     const ul=document.createElement('ul');ul.className='items';
@@ -899,7 +907,7 @@ function renderDays(){
         setTimeout(()=>{const e=document.getElementById('sub-'+ns.id);e&&e.focus();},0);};
       li.appendChild(subB);
       const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Eintrag löschen';
-      del.onclick=()=>{ if(confirm('Eintrag „'+(it.text||'')+'" löschen?')){ it.deleted=true;it.ts=now();save();renderDays(); } };
+      del.onclick=()=>{ confirmBox('Eintrag „'+(it.text||'')+'" löschen?',()=>{ it.deleted=true;it.ts=now();save();renderDays(); }); };
       li.appendChild(del);
       ul.appendChild(li);
       it.subs.filter(su=>!su.deleted).forEach(su=>{
@@ -910,7 +918,7 @@ function renderDays(){
         stxt.id='sub-'+su.id;sli.appendChild(stxt);
         sli.appendChild(badgeEl(su.author));
         const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Unterpunkt löschen';
-        sdel.onclick=()=>{ if(confirm('Unterpunkt löschen?')){ su.deleted=true;su.ts=now();save();renderDays(); } };
+        sdel.onclick=()=>{ confirmBox('Unterpunkt „'+(su.text||'')+'" löschen?',()=>{ su.deleted=true;su.ts=now();save();renderDays(); }); };
         sli.appendChild(sdel);
         ul.appendChild(sli);
       });
@@ -938,7 +946,7 @@ function renderDays(){
       r1.appendChild(mkEditable(s.name,'stayname',v=>{s.name=v;s.ts=now();save();},'Name / Campingplatz…'));
       r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();},'Preis €'));
       const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Option löschen';
-      sdel.onclick=()=>{ if(confirm('Übernachtungs-Option „'+(s.name||'')+'" löschen?')){ s.deleted=true;s.ts=now();save();renderDays(); } };
+      sdel.onclick=()=>{ confirmBox('Übernachtungs-Option „'+(s.name||'')+'" löschen?',()=>{ s.deleted=true;s.ts=now();save();renderDays(); }); };
       r1.appendChild(sdel);card.appendChild(r1);
       const r2=document.createElement('div');r2.className='stayrow';
       const linkIn=document.createElement('input');linkIn.type='text';linkIn.className='staylink';linkIn.value=s.url||'';linkIn.placeholder='Link (https://…)';
@@ -1025,7 +1033,7 @@ function renderBudget(){
     r1.appendChild(amt);
     const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';r1.appendChild(eur);
     const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Ausgabe löschen';
-    del.onclick=()=>{ if(confirm('Ausgabe „'+(e.desc||'')+'" löschen?')){ e.deleted=true;e.ts=now();save();renderBudget(); } };
+    del.onclick=()=>{ confirmBox('Ausgabe „'+(e.desc||'')+'" löschen?',()=>{ e.deleted=true;e.ts=now();save();renderBudget(); }); };
     r1.appendChild(del);
     card.appendChild(r1);
     const r2=document.createElement('div');r2.className='exprow2';
