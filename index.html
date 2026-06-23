@@ -347,7 +347,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 14</span>
+  <span style="opacity:.6">App-Version 15</span>
 </footer>
 
 <script>
@@ -582,16 +582,18 @@ function syncedPart(){ return {title:state.title,titleTs:state.titleTs,plan:stat
 function scheduleSync(){ if(!API)return; clearTimeout(syncTimer); syncTimer=setTimeout(syncNow,900); }
 function isEditing(){ const a=document.activeElement; return !!(a && (a.isContentEditable || a.tagName==='INPUT')); }
 async function syncNow(){
-  if(!API||syncing)return; syncing=true; setSyncStatus('sync');
+  if(!API||syncing||isEditing())return;   // nicht eingreifen, während gerade bearbeitet wird
+  syncing=true; setSyncStatus('sync');
   try{
     let remote=null;
     const r=await fetch(API,{method:'GET'}); const t=(await r.text()).trim();
     if(t && t!=='null') remote=JSON.parse(t);
+    if(isEditing()){ setSyncStatus('ok'); syncing=false; return; } // während des Tippens nichts ersetzen
     const merged = remote ? mergeState(syncedPart(),remote) : syncedPart();
     state.title=merged.title; state.titleTs=merged.titleTs; state.plan=merged.plan; state.pack=merged.pack; state.expenses=merged.expenses||[];
     saveLocal();
     if(JSON.stringify(merged)!==JSON.stringify(remote)) await fetch(API,{method:'POST',body:JSON.stringify(merged)});
-    if(!isEditing()){ paintTitle(); renderDays(); renderPack(); renderBudget(); }
+    paintTitle(); renderDays(); renderPack(); renderBudget();
     setSyncStatus('ok');
   }catch(e){ setSyncStatus('off'); }
   syncing=false;
