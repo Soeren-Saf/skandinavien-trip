@@ -10,6 +10,7 @@
     --text:#e7eef6; --muted:#9fb1c4; --accent:#2f6347; --accent2:#79b095; --onAccent:#ffffff;
     --p1:#4fd1c5; --p2:#63b3ed; --p3:#9f7aea; --p4:#f56565; --p5:#48bb78; --p6:#ed8936;
     --soeren:#4fd1c5; --flo:#63b3ed; --sarah:#f6ad55;
+    --seaCol:#15293a; --landCol:#33453c; --landStroke:#48604f; --mapBg1:#13283a; --mapBg2:#0b1118;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -24,7 +25,9 @@
   .stat .l{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 
   #map{position:relative;height:480px;width:100%;border-radius:14px;margin:18px 0;border:1px solid var(--line);
-    overflow:hidden;background:radial-gradient(circle at 50% 30%,#13283a,#0b1118)}
+    overflow:hidden;background:radial-gradient(circle at 50% 30%,var(--mapBg1),var(--mapBg2))}
+  .mapSea{fill:var(--seaCol)}
+  .mapLand{fill:var(--landCol);stroke:var(--landStroke);stroke-width:0.8;stroke-linejoin:round}
   #map svg{display:block;width:100%;height:100%;cursor:grab}
   #map svg.drag{cursor:grabbing}
   .node{cursor:pointer}
@@ -110,7 +113,17 @@
   .budtotals{font-size:.95rem;margin-bottom:8px}
   .budpaid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
   .budchip{font-size:.74rem;font-weight:700;color:#0f1720;border-radius:10px;padding:2px 9px;white-space:nowrap}
-  .budsettle{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:.88rem;line-height:1.6}
+  .budsettle{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:.88rem;line-height:1.7}
+  .budhint{color:var(--muted);font-size:.8rem;font-weight:400}
+  .balchip{background:var(--panel2);border:1.5px solid var(--line);border-radius:10px;padding:6px 11px;
+    font-size:.8rem;cursor:pointer;color:var(--text)}
+  .balchip:hover{filter:brightness(1.1)}
+  .expcard{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:7px}
+  .exprow2{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:7px}
+  .explbl{font-size:.76rem;color:var(--muted)}
+  .partchip{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:9px;
+    padding:3px 9px;font-size:.74rem;font-weight:700;cursor:pointer}
+  .partchip.on{border-width:1px}
   .exprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);
     border-radius:9px;padding:6px 9px;margin-bottom:6px}
   .expdesc{flex:1;min-width:120px;font-size:.9rem;cursor:text;border-radius:4px;padding:1px 4px}
@@ -128,7 +141,8 @@
   .addexp button{background:var(--accent);border:none;color:var(--onAccent);font-weight:700;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:.88rem}
   /* Helles Theme */
   body.light{ --bg:#f3f6fa; --panel:#ffffff; --panel2:#eef2f7; --line:#d3dde7;
-    --text:#1a2733; --muted:#5a6b7b; }
+    --text:#1a2733; --muted:#5a6b7b;
+    --seaCol:#cfe3f1; --landCol:#e7ecdb; --landStroke:#c2cdb0; --mapBg1:#dbeaf4; --mapBg2:#c4d7e4; }
   body.light header{background:linear-gradient(160deg,#e7eef6,#f3f6fa);border-bottom-color:#d3dde7}
   body.light .chip.active,body.light .who button.on{color:#0f1720}
   body.light .voteavg{color:#b8860b}
@@ -205,7 +219,44 @@
   .count{font-size:.78rem;color:var(--muted);margin-left:6px}
   footer{color:var(--muted);font-size:.8rem;text-align:center;padding:10px 16px 50px}
   a{color:var(--accent)}
+  /* Sprung-Navigation */
+  html{scroll-behavior:smooth}
+  .jumpnav{position:sticky;top:0;z-index:30;display:flex;gap:8px;flex-wrap:wrap;
+    background:var(--bg);padding:10px 0 10px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+  .jumpnav a{flex:1;text-align:center;min-width:92px;text-decoration:none;color:var(--text);
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 10px;
+    font-size:.85rem;font-weight:600;white-space:nowrap}
+  .jumpnav a:hover{border-color:var(--accent);color:var(--accent)}
+  .section-h{scroll-margin-top:64px}
+
   @media(max-width:680px){#map{height:340px}}
+  /* Handy-Layout */
+  @media(max-width:600px){
+    .wrap{padding:0 11px}
+    header{padding:18px 14px 14px}
+    h1{font-size:1.3rem}
+    .sub{font-size:.85rem}
+    .stats{gap:7px}
+    .stat{min-width:0;flex:1 1 44%;padding:8px 10px}
+    .stat .k{font-size:1.05rem}
+    #map{height:300px}
+    .toolbar{gap:7px}
+    .section-h{font-size:1.1rem}
+    .jumpnav a{padding:10px 8px;font-size:.82rem}
+    /* Touch-freundliche Eingaben & Buttons */
+    .btn,.adddaybtn,.additem button,.addexp button,.locbtn,.locreset,.delday,.mapbtn,.subbtn,
+    .additem input,.locinput,.staylink,.expamt,.addexp input,.addexp select,.numin,.phasesel{min-height:40px}
+    .additem,.addexp,.locrow,.stayrow,.stayvote,.exprow{gap:6px}
+    .additem input,.locinput{min-width:0;flex:1 1 100%}
+    .additem button,.locbtn{flex:1 1 auto}
+    .addexp input[type=text]{flex:1 1 100%}
+    .dhead2{gap:6px}
+    .dctrls{margin-left:auto}
+    .day{padding:12px 12px}
+    .votesum{margin-left:0}
+    .mlegend{font-size:.66rem;max-width:130px;padding:6px 8px}
+    .mzoom button{width:38px;height:38px}
+  }
 </style>
 </head>
 <body>
@@ -223,6 +274,11 @@
 </header>
 
 <div class="wrap">
+  <nav class="jumpnav">
+    <a href="#sec-plan">🗺 Tagesplaner</a>
+    <a href="#sec-pack">🎒 Packliste</a>
+    <a href="#sec-budget">💶 Budget</a>
+  </nav>
   <div id="map"></div>
 
   <div class="toolbar">
@@ -239,7 +295,7 @@
     <label class="btn" style="cursor:pointer">⬆ Import<input type="file" accept="application/json" style="display:none" onchange="importData(this)"></label>
   </div>
 
-  <h2 class="section-h">🗺 Tagesplaner — was machen wir wo?</h2>
+  <h2 class="section-h" id="sec-plan">🗺 Tagesplaner — was machen wir wo?</h2>
   <div class="section-sub">Alles editierbar: auf Titel, Datum oder Einträge klicken zum Ändern. Tage hinzufügen/löschen, Unterpunkte ergänzen — sortiert automatisch nach Tag-Nummer. Filter nach Reisephase:</div>
   <div class="phasebar" id="phasebar"></div>
   <div class="planbar">
@@ -247,7 +303,7 @@
   </div>
   <div id="days"></div>
 
-  <h2 class="section-h">🎒 Packliste</h2>
+  <h2 class="section-h" id="sec-pack">🎒 Packliste</h2>
   <div class="section-sub">Gemeinsame Liste — jeder trägt ein, was er braucht oder mitbringt.</div>
   <div class="pack-card">
     <ul class="items" id="packlist"></ul>
@@ -257,7 +313,7 @@
     </div>
   </div>
 
-  <h2 class="section-h">💶 Budget & Kostenteilung</h2>
+  <h2 class="section-h" id="sec-budget">💶 Budget & Kostenteilung</h2>
   <div class="section-sub">Wer hat was bezahlt? Die App teilt fair auf und zeigt, wer wem noch was schuldet.</div>
   <div class="pack-card">
     <div id="budgetSummary" class="budsum"></div>
@@ -435,7 +491,7 @@ state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.stays=d.sta
   if(typeof d.lat==='number' && d.eLat==null){ d.eLat=d.lat; d.eLon=d.lon; delete d.lat; delete d.lon; } // alter Einzelpunkt → Endpunkt
   d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
 state.pack.forEach(p=>{ if(p.ts==null)p.ts=1; });
-state.expenses=state.expenses||[]; state.expenses.forEach(x=>{ if(x.ts==null)x.ts=1; });
+state.expenses=state.expenses||[]; state.expenses.forEach(x=>{ if(x.ts==null)x.ts=1; if(!x.parts||!x.parts.length) x.parts=['Sören','Flo','Sarah']; });
 
 // ---------- Merge (mehrere Geräte zusammenführen, neuere Änderung gewinnt) ----------
 function newer(a,b){ return (a.ts||0)>=(b.ts||0)?a:b; }
@@ -540,20 +596,17 @@ svg.setAttribute("viewBox",`0 0 ${vbW} ${vbH}`);
 svg.setAttribute("preserveAspectRatio","xMidYMid meet");
 const g=document.createElementNS(NS,"g");
 svg.appendChild(g);
-// Meer-Hintergrund
+// Meer-Hintergrund (themenabhängig via CSS-Klasse)
 const sea=document.createElementNS(NS,"rect");
 sea.setAttribute("x",-2000);sea.setAttribute("y",-2000);
 sea.setAttribute("width",vbW+4000);sea.setAttribute("height",vbH+4000);
-sea.setAttribute("fill","#15293a");
+sea.setAttribute("class","mapSea");
 g.appendChild(sea);
-// Landflächen (Basemap)
+// Landflächen (Basemap, themenabhängig)
 landPaths.forEach(d=>{
   const pa=document.createElementNS(NS,"path");
   pa.setAttribute("d",d);
-  pa.setAttribute("fill","#33453c");
-  pa.setAttribute("stroke","#48604f");
-  pa.setAttribute("stroke-width","0.8");
-  pa.setAttribute("stroke-linejoin","round");
+  pa.setAttribute("class","mapLand");
   g.appendChild(pa);
 });
 // Routen-Ebene – wird datengesteuert aus state.plan aufgebaut
@@ -940,6 +993,7 @@ function addPack(){
 
 // ---------- Budget & Kostenteilung ----------
 const TRIO=['Sören','Flo','Sarah'];
+let budgetFocus=null;
 function renderBudget(){
   const payerSel=document.getElementById('expPayer');
   if(payerSel && !payerSel.options.length){ TRIO.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;payerSel.appendChild(o);}); payerSel.value=ME; }
@@ -947,48 +1001,84 @@ function renderBudget(){
   list.innerHTML='';
   const exp=state.expenses.filter(e=>!e.deleted);
   exp.forEach(e=>{
-    const row=document.createElement('div');row.className='exprow';
-    row.appendChild(mkEditable(e.desc,'expdesc',v=>{e.desc=v;e.ts=now();save();},'Beschreibung…'));
+    if(!e.parts||!e.parts.length) e.parts=TRIO.slice();
+    const card=document.createElement('div');card.className='expcard';
+    const r1=document.createElement('div');r1.className='exprow';
+    r1.appendChild(mkEditable(e.desc,'expdesc',v=>{e.desc=v;e.ts=now();save();},'Beschreibung…'));
     const amt=document.createElement('input');amt.type='number';amt.className='expamt';amt.value=(e.amount!=null?e.amount:'');amt.step='0.01';amt.min='0';
     amt.onchange=()=>{e.amount=parseFloat(amt.value)||0;e.ts=now();save();renderBudget();};
-    row.appendChild(amt);
-    const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';row.appendChild(eur);
+    r1.appendChild(amt);
+    const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';r1.appendChild(eur);
+    const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Ausgabe löschen';
+    del.onclick=()=>{ if(confirm('Ausgabe „'+(e.desc||'')+'" löschen?')){ e.deleted=true;e.ts=now();save();renderBudget(); } };
+    r1.appendChild(del);
+    card.appendChild(r1);
+    const r2=document.createElement('div');r2.className='exprow2';
+    const pl=document.createElement('span');pl.className='explbl';pl.textContent='bezahlt:';r2.appendChild(pl);
     const who=document.createElement('select');who.className='expwho';
     TRIO.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(e.payer===p)o.selected=true;who.appendChild(o);});
     who.style.background=PEOPLE[e.payer]||'var(--panel2)';who.style.color=PEOPLE[e.payer]?textOn(PEOPLE[e.payer]):'var(--text)';
     who.onchange=()=>{e.payer=who.value;e.ts=now();save();renderBudget();};
-    row.appendChild(who);
-    const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Ausgabe löschen';
-    del.onclick=()=>{ if(confirm('Ausgabe „'+(e.desc||'')+'" löschen?')){ e.deleted=true;e.ts=now();save();renderBudget(); } };
-    row.appendChild(del);
-    list.appendChild(row);
+    r2.appendChild(who);
+    const sl=document.createElement('span');sl.className='explbl';sl.textContent='· geteilt durch:';r2.appendChild(sl);
+    TRIO.forEach(p=>{
+      const inc=e.parts.includes(p);
+      const chip=document.createElement('button');chip.className='partchip'+(inc?' on':'');chip.textContent=p;
+      if(inc){chip.style.background=PEOPLE[p];chip.style.color=textOn(PEOPLE[p]);chip.style.borderColor=PEOPLE[p];}
+      chip.title=p+(inc?' ist beteiligt – klicken zum Entfernen':' nicht beteiligt – klicken zum Hinzufügen');
+      chip.onclick=()=>{ if(e.parts.includes(p)){ if(e.parts.length>1) e.parts=e.parts.filter(x=>x!==p); } else { e.parts=[...e.parts,p]; } e.ts=now(); save(); renderBudget(); };
+      r2.appendChild(chip);
+    });
+    card.appendChild(r2);
+    list.appendChild(card);
   });
-  const sum=document.getElementById('budgetSummary');
+  // Berechnung mit ungleicher Aufteilung
   const total=exp.reduce((a,e)=>a+(+e.amount||0),0);
-  const share=total/TRIO.length;
-  const paid={}; TRIO.forEach(p=>paid[p]=0);
-  exp.forEach(e=>{ if(e.payer && paid[e.payer]!=null) paid[e.payer]+=(+e.amount||0); });
-  const net={}; TRIO.forEach(p=>net[p]=paid[p]-share);
+  const paid={}, owed={}; TRIO.forEach(p=>{paid[p]=0;owed[p]=0;});
+  exp.forEach(e=>{ const amt=+e.amount||0; if(amt<=0)return;
+    if(e.payer && paid[e.payer]!=null) paid[e.payer]+=amt;
+    const parts=(e.parts&&e.parts.length)?e.parts:TRIO; const sh=amt/parts.length;
+    parts.forEach(p=>{ if(owed[p]!=null) owed[p]+=sh; });
+  });
+  const net={}; TRIO.forEach(p=>net[p]=paid[p]-owed[p]);
+  // Ausgleich (vereinfacht – Schulden gegeneinander verrechnet)
   const debt=TRIO.filter(p=>net[p]<-0.005).map(p=>({p,v:-net[p]}));
   const cred=TRIO.filter(p=>net[p]>0.005).map(p=>({p,v:net[p]}));
   const settle=[]; let i=0,j=0;
-  while(i<debt.length && j<cred.length){
-    const m=Math.min(debt[i].v,cred[j].v);
-    settle.push(debt[i].p+' → '+cred[j].p+': '+m.toFixed(2)+' €');
-    debt[i].v-=m; cred[j].v-=m;
-    if(debt[i].v<0.005)i++; if(cred[j].v<0.005)j++;
-  }
-  let html='<div class="budtotals"><b>Gesamt:</b> '+total.toFixed(2)+' €  ·  <b>pro Person:</b> '+share.toFixed(2)+' €</div>';
-  html+='<div class="budpaid">'+TRIO.map(p=>'<span class="budchip" style="background:'+PEOPLE[p]+';color:'+textOn(PEOPLE[p])+'">'+p+': '+paid[p].toFixed(2)+' €</span>').join('')+'</div>';
-  if(settle.length){ html+='<div class="budsettle"><b>Ausgleich:</b><br>'+settle.join('<br>')+'</div>'; }
-  else if(total>0){ html+='<div class="budsettle">Alles ausgeglichen ✓</div>'; }
-  sum.innerHTML=html;
+  while(i<debt.length && j<cred.length){ const m=Math.min(debt[i].v,cred[j].v);
+    settle.push({from:debt[i].p,to:cred[j].p,amt:m}); debt[i].v-=m;cred[j].v-=m;
+    if(debt[i].v<0.005)i++; if(cred[j].v<0.005)j++; }
+  // Zusammenfassung
+  const sum=document.getElementById('budgetSummary'); sum.innerHTML='';
+  const tot=document.createElement('div');tot.className='budtotals';
+  tot.innerHTML='<b>Gesamt:</b> '+total.toFixed(2)+' €'+(total>0?' &nbsp;·&nbsp; <span class="budhint">auf einen Namen tippen für Details</span>':'');
+  sum.appendChild(tot);
+  const chips=document.createElement('div');chips.className='budpaid';
+  TRIO.forEach(p=>{ const b=net[p];
+    const chip=document.createElement('button');chip.className='balchip'+(budgetFocus===p?' sel':'');chip.style.borderColor=PEOPLE[p];
+    if(budgetFocus===p){chip.style.background=PEOPLE[p];chip.style.color=textOn(PEOPLE[p]);}
+    const bal=Math.abs(b)<0.005?'±0 €':(b>0?'bekommt +':'zahlt −')+Math.abs(b).toFixed(2)+' €';
+    chip.innerHTML='<b>'+p+'</b> · '+bal;
+    chip.onclick=()=>{ budgetFocus=(budgetFocus===p?null:p); renderBudget(); };
+    chips.appendChild(chip);
+  });
+  sum.appendChild(chips);
+  const set=document.createElement('div');set.className='budsettle';
+  let lines=settle; if(budgetFocus) lines=settle.filter(s=>s.from===budgetFocus||s.to===budgetFocus);
+  if(!lines.length){ set.textContent = total>0 ? (budgetFocus? budgetFocus+' ist ausgeglichen ✓' : 'Alles ausgeglichen ✓') : 'Noch keine Ausgaben erfasst.'; }
+  else { set.innerHTML='<b>'+(budgetFocus? budgetFocus+' – wer zahlt wem:' : 'Ausgleich (vereinfacht):')+'</b><br>'+
+    lines.map(s=>{ const a=s.amt.toFixed(2)+' €';
+      if(budgetFocus===s.from) return '➜ <b>'+s.from+'</b> zahlt '+s.to+': '+a;
+      if(budgetFocus===s.to)   return '⬅ '+s.from+' zahlt <b>'+s.to+'</b>: '+a;
+      return s.from+' → '+s.to+': '+a;
+    }).join('<br>'); }
+  sum.appendChild(set);
 }
 function addExpense(){
   const desc=document.getElementById('expDesc'), amt=document.getElementById('expAmt'), payer=document.getElementById('expPayer');
   const d=desc.value.trim(), a=parseFloat(amt.value);
   if(!d || !(a>0)){ alert('Bitte Beschreibung und Betrag (€) eingeben.'); return; }
-  state.expenses.push({id:uid(),ts:now(),desc:d,amount:a,payer:(payer&&payer.value)||ME});
+  state.expenses.push({id:uid(),ts:now(),desc:d,amount:a,payer:(payer&&payer.value)||ME,parts:TRIO.slice()});
   desc.value='';amt.value='';save();renderBudget();desc.focus();
 }
 
