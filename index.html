@@ -70,6 +70,8 @@
   .day{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--accent);
     border-radius:12px;padding:14px 16px;margin-bottom:12px;transition:box-shadow .2s,transform .2s;scroll-margin-top:14px}
   .day.flash{box-shadow:0 0 0 2px var(--accent),0 6px 24px rgba(79,209,197,.25);transform:translateX(2px)}
+  .day.today{box-shadow:0 0 0 2px var(--accent)}
+  .todaybadge{font-size:.68rem;font-weight:700;color:var(--onAccent);background:var(--accent);border-radius:10px;padding:2px 8px;white-space:nowrap}
   .day.hide{display:none}
   .ddate{font-size:.8rem;color:var(--muted)}
   .dtag{font-size:.7rem;padding:2px 8px;border-radius:10px;color:#0f1720;font-weight:700;white-space:nowrap}
@@ -284,6 +286,17 @@
     .mlegend{font-size:.66rem;max-width:130px;padding:6px 8px}
     .mzoom button{width:38px;height:38px}
   }
+  /* Druck / PDF */
+  @media print{
+    body{ --bg:#fff; --panel:#fff; --panel2:#fff; --line:#ccc; --text:#000; --muted:#444; }
+    header{background:#fff !important}
+    .jumpnav,.toolbar,#map,.mzoom,.mlegend,.mtip,.draghandle,.movebtn,.subbtn,.del,.delday,.mapbtn,
+    .additem,.addexp,.locbtn,.locreset,.planbar,.phasebar,footer,.who,#themeBtn,#syncBtn,#syncStatus,.adddaybtn{display:none !important}
+    *{box-shadow:none !important}
+    .day{break-inside:avoid;page-break-inside:avoid;border:1px solid #ccc}
+    .staybox{background:#fff}
+    a{color:#000;text-decoration:none}
+  }
 </style>
 </head>
 <body>
@@ -293,8 +306,8 @@
     <div class="sub">Sören · Flo · Sarah — eigenes Auto · Wörgl → Skandinavien → Wörgl</div>
     <div class="stats">
       <div class="stat"><div class="k" id="statDays">26 Tage</div><div class="l">15. Aug – 9. Sep</div></div>
-      <div class="stat"><div class="k" id="statKm">≈ — km</div><div class="l">Fahrstrecke (geschätzt)</div></div>
-      <div class="stat"><div class="k" id="statDrive">≈ — h</div><div class="l">Reine Fahrzeit</div></div>
+      <div class="stat"><div class="k" id="statKm">≈ — km</div><div class="l" id="statKmL">Fahrstrecke (geschätzt)</div></div>
+      <div class="stat"><div class="k" id="statDrive">≈ — h</div><div class="l" id="statDriveL">Reine Fahrzeit</div></div>
       <div class="stat"><div class="k">7 Länder</div><div class="l">AT·DE·DK·NO·FI·SE·PL</div></div>
     </div>
   </div>
@@ -302,6 +315,7 @@
 
 <div class="wrap">
   <nav class="jumpnav">
+    <a href="#" onclick="jumpToToday();return false;">📍 Heute</a>
     <a href="#sec-plan">🗺 Tagesplaner</a>
     <a href="#sec-pack">🎒 Packliste</a>
     <a href="#sec-budget">💶 Budget</a>
@@ -318,6 +332,8 @@
     <button class="themeToggle" id="themeBtn" onclick="toggleTheme()" role="switch" title="Hell/Dunkel umschalten" aria-label="Hell/Dunkel umschalten"><span class="tknob">🌙</span></button>
     <button class="btn" id="syncBtn" onclick="setupSync()" title="Live-Sync über Google Sheet einrichten">🔗 Sync einrichten</button>
     <span class="sub" id="syncStatus" style="font-size:.8rem;font-weight:600">nur lokal</span>
+    <button class="btn" onclick="printPlan()" title="Plan drucken oder als PDF speichern">🖨 PDF</button>
+    <button class="btn" onclick="exportICS()" title="Reisetage als Kalender (.ics) exportieren">📅 Kalender</button>
     <button class="btn" onclick="exportData()" title="Plan als Datei sichern/teilen">⬇ Export</button>
     <label class="btn" style="cursor:pointer">⬆ Import<input type="file" accept="application/json" style="display:none" onchange="importData(this)"></label>
   </div>
@@ -357,7 +373,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 18</span>
+  <span style="opacity:.6">App-Version 19</span>
 </footer>
 
 <script>
@@ -800,6 +816,16 @@ function scrollToDay(n){
   el.scrollIntoView({behavior:'smooth',block:'center'});
   el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1500);
 }
+// ----- „Heute"-Ansicht -----
+const TRIP_START=new Date(2026,7,15); // 15. August 2026 = Tag 1
+function todayNum(){ const t=new Date(); const a=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  return Math.round((a-TRIP_START)/86400000)+1; }
+function jumpToToday(){
+  const n=todayNum();
+  if(n>=1 && state.plan.some(d=>!d.deleted&&d.num===n)) scrollToDay(n);
+  else if(n<1) alert('Die Reise beginnt am 15. August 2026 – noch '+(1-n)+' Tag(e).');
+  else alert('Die Reise ist laut Plan bereits vorbei.');
+}
 
 // ---------- Identität ----------
 const whoBtns=document.querySelectorAll('.who button');
@@ -869,21 +895,28 @@ function doReorder(arr, moved, target, before){
   arr.splice(before?ti:ti+1, 0, moved);
 }
 function clearDropMarks(c){ (c||document).querySelectorAll('.drop-top,.drop-bot').forEach(x=>x.classList.remove('drop-top','drop-bot')); }
-// hängt einen Ziehgriff (☰) an ein <li> und macht die Liste per Drag&Drop sortierbar
+// hängt einen Ziehgriff (☰) an ein <li> – Sortieren per Maus UND Finger (Pointer Events)
 function attachDnD(li, arr, el, redraw){
-  li.draggable=false;
+  li.dataset.dndid=el.id;
   const h=document.createElement('span');h.className='draghandle';h.textContent='☰';h.title='Ziehen zum Verschieben';
-  h.addEventListener('mousedown',()=>{ li.draggable=true;
-    const off=()=>{ li.draggable=false; document.removeEventListener('mouseup',off); };
-    document.addEventListener('mouseup',off); });
-  li.addEventListener('dragstart',e=>{ dragging=true; dragCtx={arr,el}; li.classList.add('dragging');
-    if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain','');}catch(_){ } } });
-  li.addEventListener('dragend',()=>{ dragging=false; li.draggable=false; li.classList.remove('dragging'); clearDropMarks(li.parentNode); });
-  li.addEventListener('dragover',e=>{ if(!dragCtx||dragCtx.arr!==arr||dragCtx.el===el)return; e.preventDefault();
-    clearDropMarks(li.parentNode); li.classList.add(dropBefore(li,e)?'drop-top':'drop-bot'); });
-  li.addEventListener('dragleave',()=>{ li.classList.remove('drop-top','drop-bot'); });
-  li.addEventListener('drop',e=>{ if(!dragCtx||dragCtx.arr!==arr)return; e.preventDefault();
-    const before=dropBefore(li,e); doReorder(arr,dragCtx.el,el,before); dragging=false; clearDropMarks(li.parentNode); save(); (redraw||renderDays)(); });
+  h.style.touchAction='none';
+  let active=false, target=null;
+  h.addEventListener('pointerdown',e=>{ e.preventDefault(); active=true; dragging=true; target=null;
+    li.classList.add('dragging'); try{h.setPointerCapture(e.pointerId);}catch(_){ } });
+  h.addEventListener('pointermove',e=>{ if(!active)return; e.preventDefault();
+    const ulEl=li.parentNode; clearDropMarks(ulEl);
+    const t=document.elementFromPoint(e.clientX,e.clientY);
+    const tli=(t&&t.closest)?t.closest('li.item, li.subitem'):null;
+    if(tli&&tli!==li&&ulEl.contains(tli)&&arr.some(x=>x.id===tli.dataset.dndid)){
+      const before=dropBefore(tli,e); tli.classList.add(before?'drop-top':'drop-bot'); target={id:tli.dataset.dndid,before};
+    } else target=null;
+  });
+  const endDrag=e=>{ if(!active)return; active=false; dragging=false;
+    li.classList.remove('dragging'); clearDropMarks(li.parentNode); try{h.releasePointerCapture(e.pointerId);}catch(_){ }
+    if(target){ const ti=arr.find(x=>x.id===target.id); if(ti){ doReorder(arr,el,ti,target.before); save(); (redraw||renderDays)(); } }
+    target=null;
+  };
+  h.addEventListener('pointerup',endDrag); h.addEventListener('pointercancel',endDrag);
   return h;
 }
 function mkEditable(text,cls,onSave,ph){
@@ -901,11 +934,12 @@ function renderDays(){
     if(activeFilter!=='all' && activeFilter!==d.phase) return;
     const ph=PHASES[d.phase]; const col=ph?ph.color:'#7a8aa0';
     const div=document.createElement('div');
-    div.id='day-'+d.num;div.className='day';div.style.borderLeftColor=col;
+    div.id='day-'+d.num;div.className='day'+(d.num===todayNum()?' today':'');div.style.borderLeftColor=col;
 
     // Kopfzeile: Tag-Nr (sortiert), Datum, Phase, Karte, Löschen
     const head=document.createElement('div');head.className='dhead2';
     const left=document.createElement('div');left.className='dhead-left';
+    if(d.num===todayNum()){const tb=document.createElement('span');tb.className='todaybadge';tb.textContent='📍 Heute';left.appendChild(tb);}
     const numWrap=document.createElement('span');numWrap.className='dnum';
     numWrap.appendChild(document.createTextNode('Tag '));
     const numIn=document.createElement('input');numIn.type='number';numIn.className='numin';numIn.value=d.num;numIn.min=1;
@@ -1169,6 +1203,53 @@ function addExpense(){
   desc.value='';amt.value='';save();renderBudget();desc.focus();
 }
 
+// ---------- Echte Routen-Distanzen (OSRM, braucht Internet) ----------
+async function fetchRealRoute(){
+  try{
+    const rd=resolvedDays().filter(o=>o.end);
+    if(rd.length<2) return;
+    const coords=rd.map(o=>o.end[1].toFixed(5)+','+o.end[0].toFixed(5)).join(';');
+    const cacheKey='nordkap_route_'+coords.length+'_'+rd.length;
+    let data=null;
+    const cached=localStorage.getItem(cacheKey);
+    if(cached){ try{ data=JSON.parse(cached); }catch(_){ } }
+    if(!data){
+      const r=await fetch('https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=false');
+      const j=await r.json();
+      if(j && j.code==='Ok' && j.routes && j.routes[0]){ data={km:j.routes[0].distance/1000, h:j.routes[0].duration/3600}; localStorage.setItem(cacheKey,JSON.stringify(data)); }
+    }
+    if(data){
+      const ke=document.getElementById('statKm'); if(ke) ke.textContent=Math.round(data.km).toLocaleString('de-DE')+' km';
+      const kl=document.getElementById('statKmL'); if(kl) kl.textContent='Fahrstrecke (Route)';
+      const H=Math.floor(data.h), M=Math.round((data.h-H)*60);
+      const de=document.getElementById('statDrive'); if(de) de.textContent=H+' h '+(M<10?'0':'')+M+' min';
+      const dl=document.getElementById('statDriveL'); if(dl) dl.textContent='Reine Fahrzeit (Route)';
+    }
+  }catch(e){ /* offline → Luftlinien-Schätzung bleibt stehen */ }
+}
+
+// ---------- Kalender-Export (.ics) ----------
+function icsEsc(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/[,;]/g,m=>'\\'+m).replace(/\r?\n/g,'\\n'); }
+function exportICS(){
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Nordkap Roadtrip//DE\r\nCALSCALE:GREGORIAN\r\n';
+  state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0)).forEach(d=>{
+    const start=new Date(TRIP_START); start.setDate(start.getDate()+((d.num||1)-1));
+    const end=new Date(start); end.setDate(end.getDate()+1);
+    const sum='Tag '+d.num+': '+((d.title||'').trim()||'Reisetag');
+    const descParts=[]; if(d.startTxt||d.endTxt) descParts.push('Route: '+(d.startTxt||'?')+' → '+(d.endTxt||'?'));
+    if(d.dist) descParts.push('Distanz: '+d.dist); if(d.desc) descParts.push(d.desc);
+    (d.items||[]).filter(it=>!it.deleted).forEach(it=>descParts.push('• '+it.text));
+    ics+='BEGIN:VEVENT\r\nUID:nordkap-'+d.num+'-'+(d.id||'')+'@roadtrip\r\nDTSTART;VALUE=DATE:'+fmt(start)+
+      '\r\nDTEND;VALUE=DATE:'+fmt(end)+'\r\nSUMMARY:'+icsEsc(sum)+'\r\nDESCRIPTION:'+icsEsc(descParts.join('\n'))+'\r\nEND:VEVENT\r\n';
+  });
+  ics+='END:VCALENDAR';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
+  a.download='nordkap-roadtrip.ics';a.click();
+}
+function printPlan(){ window.print(); }
+
 // ---------- Export / Import (Backup & manuelles Zusammenführen) ----------
 function exportData(){
   const blob=new Blob([JSON.stringify(syncedPart(),null,2)],{type:'application/json'});
@@ -1209,6 +1290,8 @@ renderPack();
 renderBudget();
 paintSyncUI();
 if(API){ syncNow(); ensurePoll(); }
+fetchRealRoute();   // echte Strecke laden (falls online)
+{ const tn=todayNum(); if(tn>=1 && state.plan.some(d=>!d.deleted&&d.num===tn)) setTimeout(()=>scrollToDay(tn),500); }
 </script>
 </body>
 </html>
