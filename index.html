@@ -347,7 +347,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 13</span>
+  <span style="opacity:.6">App-Version 14</span>
 </footer>
 
 <script>
@@ -879,7 +879,7 @@ function renderDays(){
     const mapB=document.createElement('button');mapB.className='mapbtn';mapB.textContent='🗺 Auf Karte';
     mapB.onclick=()=>focusDay(d.num);ctrls.appendChild(mapB);
     const delB=document.createElement('button');delB.className='delday';delB.textContent='✕ Tag';delB.title='Diesen Tag löschen';
-    delB.onclick=()=>{confirmBox('Tag '+d.num+(d.title?' („'+d.title+'")':'')+' mit allen Einträgen löschen?',()=>{d.deleted=true;d.ts=now();save();renderDays();});};
+    delB.onclick=()=>{ if(confirm('Tag '+d.num+(d.title?' („'+d.title+'")':'')+' mit allen Einträgen wirklich löschen?')){d.deleted=true;d.ts=now();save();renderDays();} };
     ctrls.appendChild(delB);head.appendChild(ctrls);
     div.appendChild(head);
 
@@ -900,32 +900,36 @@ function renderDays(){
     locLine.appendChild(mkEditable(d.endTxt,'locname-ed',v=>{d.endTxt=v;d.ts=now();save();},'Zielort…'));
     div.appendChild(locLine);
 
-    // Einträge + Unterpunkte
+    // === Einträge & Unterpunkte (neu aufgebaut: direktes Hinzufügen/Löschen) ===
     const ul=document.createElement('ul');ul.className='items';
-    d.items.filter(it=>!it.deleted).forEach(it=>{
+    (d.items||[]).filter(it=>!it.deleted).forEach(it=>{
       if(!it.subs)it.subs=[];
+      // Haupteintrag
       const li=document.createElement('li');li.className='item'+(it.done?' checked':'');
       const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!it.done;
-      cb.onchange=()=>{it.done=cb.checked;it.ts=now();save();renderDays();};li.appendChild(cb);
+      cb.onchange=()=>{it.done=cb.checked;it.ts=now();save();renderDays();};
+      li.appendChild(cb);
       li.appendChild(mkEditable(it.text,'txt-ed',v=>{it.text=v;it.ts=now();save();},'Eintrag…'));
       li.appendChild(badgeEl(it.author));
-      const subB=document.createElement('button');subB.className='subbtn';subB.textContent='+ Unterpunkt';
-      subB.onclick=()=>{const ns={id:uid(),ts:now(),text:'',author:ME,done:false};it.subs.push(ns);save();renderDays();
+      const subB=document.createElement('button');subB.type='button';subB.className='subbtn';subB.textContent='+ Unterpunkt';
+      subB.onclick=()=>{const ns={id:uid(),ts:now(),text:'',author:ME,done:false};it.subs.push(ns);it.ts=now();save();renderDays();
         setTimeout(()=>{const e=document.getElementById('sub-'+ns.id);e&&e.focus();},0);};
       li.appendChild(subB);
-      const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Eintrag löschen';
-      del.onclick=()=>{ confirmBox('Eintrag „'+(it.text||'')+'" löschen?',()=>{ it.deleted=true;it.ts=now();save();renderDays(); }); };
+      const del=document.createElement('button');del.type='button';del.className='del';del.textContent='✕';del.title='Eintrag entfernen';
+      del.onclick=()=>{ it.deleted=true;it.ts=now();save();renderDays(); };
       li.appendChild(del);
       ul.appendChild(li);
+      // Unterpunkte
       it.subs.filter(su=>!su.deleted).forEach(su=>{
         const sli=document.createElement('li');sli.className='subitem'+(su.done?' checked':'');
         const scb=document.createElement('input');scb.type='checkbox';scb.checked=!!su.done;
-        scb.onchange=()=>{su.done=scb.checked;su.ts=now();save();renderDays();};sli.appendChild(scb);
+        scb.onchange=()=>{su.done=scb.checked;su.ts=now();save();renderDays();};
+        sli.appendChild(scb);
         const stxt=mkEditable(su.text,'txt-ed',v=>{su.text=v;su.ts=now();save();},'Unterpunkt…');
         stxt.id='sub-'+su.id;sli.appendChild(stxt);
         sli.appendChild(badgeEl(su.author));
-        const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Unterpunkt löschen';
-        sdel.onclick=()=>{ confirmBox('Unterpunkt „'+(su.text||'')+'" löschen?',()=>{ su.deleted=true;su.ts=now();save();renderDays(); }); };
+        const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.textContent='✕';sdel.title='Unterpunkt entfernen';
+        sdel.onclick=()=>{ su.deleted=true;su.ts=now();save();renderDays(); };
         sli.appendChild(sdel);
         ul.appendChild(sli);
       });
@@ -935,7 +939,7 @@ function renderDays(){
     // Eintrag hinzufügen
     const add=document.createElement('div');add.className='additem';
     const inp=document.createElement('input');inp.type='text';inp.placeholder='Eintrag für Tag '+d.num+' hinzufügen…';
-    const btn=document.createElement('button');btn.textContent='+ Hinzufügen';
+    const btn=document.createElement('button');btn.type='button';btn.textContent='+ Hinzufügen';
     const go=()=>{const v=inp.value.trim();if(!v)return;
       d.items.push({id:uid(),ts:now(),text:v,author:ME,done:false,subs:[]});save();renderDays();
       setTimeout(()=>{const el=document.getElementById('day-'+d.num);if(el){const i=el.querySelector('.additem input');i&&i.focus();}},0);};
@@ -952,8 +956,8 @@ function renderDays(){
       const r1=document.createElement('div');r1.className='stayrow';
       r1.appendChild(mkEditable(s.name,'stayname',v=>{s.name=v;s.ts=now();save();},'Name / Campingplatz…'));
       r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();},'Preis €'));
-      const sdel=document.createElement('button');sdel.className='del';sdel.textContent='✕';sdel.title='Option löschen';
-      sdel.onclick=()=>{ confirmBox('Übernachtungs-Option „'+(s.name||'')+'" löschen?',()=>{ s.deleted=true;s.ts=now();save();renderDays(); }); };
+      const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.textContent='✕';sdel.title='Option entfernen';
+      sdel.onclick=()=>{ s.deleted=true;s.ts=now();save();renderDays(); };
       r1.appendChild(sdel);card.appendChild(r1);
       const r2=document.createElement('div');r2.className='stayrow';
       const linkIn=document.createElement('input');linkIn.type='text';linkIn.className='staylink';linkIn.value=s.url||'';linkIn.placeholder='Link (https://…)';
@@ -983,7 +987,7 @@ function renderDays(){
     });
     const addS=document.createElement('div');addS.className='additem';
     const sInp=document.createElement('input');sInp.type='text';sInp.placeholder='Übernachtungs-Option hinzufügen…';
-    const sBtn=document.createElement('button');sBtn.textContent='+ Option';
+    const sBtn=document.createElement('button');sBtn.type='button';sBtn.textContent='+ Option';
     const addStay=()=>{const v=sInp.value.trim();if(!v)return;
       (d.stays=d.stays||[]).push({id:uid(),ts:now(),name:v,price:'',url:'',author:ME,votes:{},votesTs:{}});
       save();renderDays();
@@ -1039,8 +1043,8 @@ function renderBudget(){
     amt.onchange=()=>{e.amount=parseFloat(amt.value)||0;e.ts=now();save();renderBudget();};
     r1.appendChild(amt);
     const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';r1.appendChild(eur);
-    const del=document.createElement('button');del.className='del';del.textContent='✕';del.title='Ausgabe löschen';
-    del.onclick=()=>{ confirmBox('Ausgabe „'+(e.desc||'')+'" löschen?',()=>{ e.deleted=true;e.ts=now();save();renderBudget(); }); };
+    const del=document.createElement('button');del.type='button';del.className='del';del.textContent='✕';del.title='Ausgabe entfernen';
+    del.onclick=()=>{ e.deleted=true;e.ts=now();save();renderBudget(); };
     r1.appendChild(del);
     card.appendChild(r1);
     const r2=document.createElement('div');r2.className='exprow2';
