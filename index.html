@@ -114,6 +114,10 @@
   .stayname{flex:1;min-width:120px;font-weight:600;font-size:.92rem;cursor:text;border-radius:4px;padding:1px 4px}
   .stayprice{min-width:60px;color:var(--accent2);font-weight:600;font-size:.85rem;cursor:text;border-radius:4px;padding:1px 4px}
   .stayname:focus,.stayprice:focus{background:rgba(79,209,197,.10);box-shadow:0 0 0 1px var(--accent)}
+  .perperson{font-size:.74rem;color:var(--muted);white-space:nowrap;align-self:center}
+  .staynote{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:4px 8px;font-size:.8rem;font-family:inherit}
+  .staynote:focus{outline:none;border-color:var(--accent)}
   .staylink{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);color:var(--text);
     border-radius:7px;padding:4px 8px;font-size:.8rem;font-family:inherit}
   .staylink:focus{outline:none;border-color:var(--accent)}
@@ -373,7 +377,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 19</span>
+  <span style="opacity:.6">App-Version 20</span>
 </footer>
 
 <script>
@@ -1034,7 +1038,9 @@ function renderDays(){
       const card=document.createElement('div');card.className='stay';
       const r1=document.createElement('div');r1.className='stayrow';
       r1.appendChild(mkEditable(s.name,'stayname',v=>{s.name=v;s.ts=now();save();},'Name / Campingplatz…'));
-      r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();},'Preis €'));
+      r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();renderDays();},'Gesamtpreis €'));
+      const pn=parseFloat(String(s.price||'').replace(',','.').replace(/[^\d.]/g,''));
+      if(!isNaN(pn)&&pn>0){ const pp=document.createElement('span');pp.className='perperson';pp.textContent='≈ '+(pn/TRIO.length).toFixed(2)+' €/Person';r1.appendChild(pp); }
       const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.textContent='✕';sdel.title='Option entfernen';
       sdel.onclick=()=>{ s.deleted=true;s.ts=now();save();renderDays(); };
       r1.appendChild(sdel);card.appendChild(r1);
@@ -1042,9 +1048,13 @@ function renderDays(){
       const linkIn=document.createElement('input');linkIn.type='text';linkIn.className='staylink';linkIn.value=s.url||'';linkIn.placeholder='Link (https://…)';
       linkIn.onchange=()=>{s.url=linkIn.value.trim();s.ts=now();save();renderDays();};
       r2.appendChild(linkIn);
-      const open=document.createElement('button');open.className='locbtn';open.textContent='↗ Öffnen';
+      const open=document.createElement('button');open.type='button';open.className='locbtn';open.textContent='↗ Öffnen';
       open.onclick=()=>{let u=(s.url||'').trim();if(!u)return;if(!/^https?:\/\//i.test(u))u='https://'+u;window.open(u,'_blank','noopener');};
-      r2.appendChild(open);card.appendChild(r2);
+      r2.appendChild(open);
+      const noteIn=document.createElement('input');noteIn.type='text';noteIn.className='staynote';noteIn.value=s.notes||'';noteIn.placeholder='📝 Notiz / Anmerkung…';
+      noteIn.onchange=()=>{s.notes=noteIn.value;s.ts=now();save();};
+      r2.appendChild(noteIn);
+      card.appendChild(r2);
       const r3=document.createElement('div');r3.className='stayvote';
       const lbl=document.createElement('span');lbl.className='votelbl';lbl.textContent='Meine Wertung:';r3.appendChild(lbl);
       const stars=document.createElement('span');stars.className='stars';
