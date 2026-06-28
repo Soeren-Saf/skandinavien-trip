@@ -211,7 +211,7 @@
   /* Editierbarer Planer */
   #tripTitle{outline:none;border-radius:6px;padding:0 4px;margin-left:-4px}
   #tripTitle:focus{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px var(--accent)}
-  .planbar{margin:0 0 14px}
+  .planbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
   .adddaybtn{background:var(--accent);border:none;color:var(--onAccent);font-weight:700;border-radius:8px;
     padding:8px 16px;cursor:pointer;font-size:.9rem}
   .adddaybtn:hover{filter:brightness(1.08)}
@@ -267,6 +267,39 @@
     font-size:.85rem;font-weight:600;white-space:nowrap}
   .jumpnav a:hover{border-color:var(--accent);color:var(--accentText)}
   .section-h{scroll-margin-top:64px}
+
+  /* Icons */
+  .ic{display:inline-block;vertical-align:-3px;flex:none}
+  /* Einklappbare Tage */
+  .chev{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:0 2px 0 0;flex:none;align-self:center;display:inline-flex}
+  .chev:hover{color:var(--text)}
+  .chev .ic{transition:transform .25s ease}
+  .day.collapsed .chev .ic{transform:rotate(-90deg)}
+  .daybody{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease,opacity .25s ease}
+  .daybody-inner{overflow:hidden;min-height:0}
+  .day.collapsed .daybody{grid-template-rows:0fr;opacity:0}
+  /* Phasen-Kapitel */
+  .chapter{display:flex;align-items:center;gap:9px;margin:30px 2px 12px;font-family:var(--font-serif);
+    font-size:1.08rem;color:var(--muted);letter-spacing:.3px}
+  .chapter:first-child{margin-top:8px}
+  .chapter .phasedot{width:9px;height:9px}
+  /* Phasen-Zeitleiste */
+  .ptimeline{display:flex;gap:2px;margin:2px 0 16px;height:10px}
+  .pseg{flex:1;border:none;border-radius:2px;cursor:pointer;padding:0;opacity:.8;transition:opacity .15s ease,transform .15s ease}
+  .pseg:hover{opacity:1;transform:scaleY(1.6)}
+  /* Übersichts-Leiste */
+  .overview{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 6px}
+  .ovitem{flex:1 1 130px;border:1px solid var(--line);border-radius:12px;padding:11px 15px;background:transparent}
+  .ovwide{flex:2 1 220px}
+  .ovk{font-family:var(--font-serif);font-size:1.18rem;font-weight:600}
+  .ovk.ovsmall{font-size:.9rem;font-family:inherit;font-weight:600;line-height:1.35}
+  .ovl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+  /* Suche */
+  .searchwrap{position:relative;display:inline-flex;align-items:center;flex:1;min-width:160px;max-width:300px}
+  .searchic{position:absolute;left:9px;color:var(--muted);display:inline-flex;pointer-events:none}
+  #daySearch{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;
+    padding:7px 10px 7px 32px;font-size:.85rem;font-family:inherit}
+  #daySearch:focus{outline:none;border-color:var(--accent)}
 
   @media(max-width:680px){#map{height:440px}}
   /* Handy-Layout */
@@ -333,6 +366,8 @@
   </nav>
   <div id="map"></div>
 
+  <div id="overview" class="overview"></div>
+
   <div class="toolbar">
     <div class="who">
       <span class="lbl">Ich bin:</span>
@@ -352,8 +387,11 @@
   <h2 class="section-h" id="sec-plan">🗺 Tagesplaner — was machen wir wo?</h2>
   <div class="section-sub">Alles editierbar: auf Titel, Datum oder Einträge klicken zum Ändern. Tage hinzufügen/löschen, Unterpunkte ergänzen — sortiert automatisch nach Tag-Nummer. Filter nach Reisephase:</div>
   <div class="phasebar" id="phasebar"></div>
+  <div id="phaseTimeline" class="ptimeline" title="Reiseverlauf – auf einen Tag tippen"></div>
   <div class="planbar">
     <button class="adddaybtn" onclick="addDay()">＋ Tag hinzufügen</button>
+    <button class="btn" onclick="toggleAllDays()">Alle ein-/ausklappen</button>
+    <span class="searchwrap"><span class="searchic" id="searchic"></span><input id="daySearch" type="text" placeholder="Tage durchsuchen…" oninput="onSearch(this.value)"></span>
   </div>
   <div id="days"></div>
 
@@ -384,7 +422,7 @@
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 21</span>
+  <span style="opacity:.6">App-Version 22</span>
 </footer>
 
 <script>
@@ -911,7 +949,7 @@ function clearDropMarks(c){ (c||document).querySelectorAll('.drop-top,.drop-bot'
 // hängt einen Ziehgriff (☰) an ein <li> – Sortieren per Maus UND Finger (Pointer Events)
 function attachDnD(li, arr, el, redraw){
   li.dataset.dndid=el.id;
-  const h=document.createElement('span');h.className='draghandle';h.textContent='☰';h.title='Ziehen zum Verschieben';
+  const h=document.createElement('span');h.className='draghandle';h.innerHTML=svgIcon('grip');h.title='Ziehen zum Verschieben';
   h.style.touchAction='none';
   let active=false, target=null;
   h.addEventListener('pointerdown',e=>{ e.preventDefault(); active=true; dragging=true; target=null;
@@ -940,18 +978,73 @@ function mkEditable(text,cls,onSave,ph){
   el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el.blur();}});
   return el;
 }
+// --- Linien-Icons (Inline-SVG, themenfähig über currentColor) ---
+function svgIcon(name){ const P={
+  grip:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>',
+  x:'<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>',
+  pin:'<path d="M12 21s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/>',
+  ext:'<path d="M14 5h5v5"/><path d="M19 5l-8 8"/><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
+  chevron:'<path d="M6 9l6 6 6-6"/>',
+  search:'<circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/>'
+}[name]||''; return '<svg class="ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P+'</svg>'; }
+
+// --- Einklappen, Suche, Kapitel, Zeitleiste, Übersicht ---
+let searchTerm='';
+let collapsed=new Set(JSON.parse(localStorage.getItem('nordkap_collapsed')||'[]'));
+function saveCollapsed(){ localStorage.setItem('nordkap_collapsed',JSON.stringify([...collapsed])); }
+function onSearch(v){ searchTerm=v||''; renderDays(); }
+function toggleAllDays(){ const days=state.plan.filter(d=>!d.deleted);
+  const anyOpen=days.some(d=>!collapsed.has(d.id));
+  if(anyOpen) days.forEach(d=>collapsed.add(d.id)); else collapsed.clear();
+  saveCollapsed(); renderDays(); }
+function dayMatches(d,q){ const parts=[d.title,d.desc,d.date,d.startTxt,d.endTxt];
+  (d.items||[]).forEach(it=>{ if(!it.deleted){parts.push(it.text);(it.subs||[]).forEach(su=>{if(!su.deleted)parts.push(su.text);});} });
+  (d.stays||[]).forEach(s=>{ if(!s.deleted){parts.push(s.name);parts.push(s.notes);} });
+  return parts.filter(Boolean).join(' ').toLowerCase().includes(q); }
+function chapterHeader(phase){ const ph=PHASES[phase]; const h=document.createElement('div');h.className='chapter';
+  const dot=document.createElement('span');dot.className='phasedot';dot.style.background=ph?ph.color:'var(--line)';h.appendChild(dot);
+  const t=document.createElement('span');t.textContent=ph?ph.name:'Ohne Phase';h.appendChild(t); return h; }
+function renderTimeline(){ const el=document.getElementById('phaseTimeline'); if(!el)return; el.innerHTML='';
+  state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0)).forEach(d=>{
+    const ph=PHASES[d.phase]; const seg=document.createElement('button');seg.type='button';seg.className='pseg';
+    seg.style.background=ph?ph.color:'var(--line)'; seg.title='Tag '+d.num+(d.title?' · '+d.title:'');
+    seg.onclick=()=>scrollToDay(d.num); el.appendChild(seg);
+  }); }
+function renderOverview(){ const el=document.getElementById('overview'); if(!el)return;
+  const days=state.plan.filter(d=>!d.deleted); const n=days.length;
+  const withStay=days.filter(d=>(d.stays||[]).some(s=>!s.deleted)).length;
+  const exp=state.expenses.filter(e=>!e.deleted); const total=exp.reduce((a,e)=>a+(+e.amount||0),0);
+  const paid={},owed={}; TRIO.forEach(p=>{paid[p]=0;owed[p]=0;});
+  exp.forEach(e=>{const a=+e.amount||0;if(a<=0)return; if(paid[e.payer]!=null)paid[e.payer]+=a; const pr=(e.parts&&e.parts.length)?e.parts:TRIO; const sh=a/pr.length; pr.forEach(p=>{if(owed[p]!=null)owed[p]+=sh;});});
+  const net={};TRIO.forEach(p=>net[p]=paid[p]-owed[p]);
+  const debt=TRIO.filter(p=>net[p]<-0.005).map(p=>({p,v:-net[p]})), cred=TRIO.filter(p=>net[p]>0.005).map(p=>({p,v:net[p]}));
+  const settle=[];let i=0,j=0;while(i<debt.length&&j<cred.length){const m=Math.min(debt[i].v,cred[j].v);settle.push(debt[i].p+'→'+cred[j].p+' '+Math.round(m)+' €');debt[i].v-=m;cred[j].v-=m;if(debt[i].v<0.005)i++;if(cred[j].v<0.005)j++;}
+  const settleTxt= total>0 ? (settle.length?settle.join(' · '):'ausgeglichen ✓') : '—';
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  el.innerHTML='<div class="ovitem"><div class="ovk">'+n+'</div><div class="ovl">Tage</div></div>'+
+    '<div class="ovitem"><div class="ovk">'+withStay+'/'+n+'</div><div class="ovl">mit Unterkunft</div></div>'+
+    '<div class="ovitem"><div class="ovk">'+Math.round(total).toLocaleString('de-DE')+' €</div><div class="ovl">Gesamtkosten</div></div>'+
+    '<div class="ovitem ovwide"><div class="ovk ovsmall">'+esc(settleTxt)+'</div><div class="ovl">Ausgleich</div></div>';
+}
 function renderDays(){
   dayWrap.innerHTML='';
   const plan=state.plan.filter(d=>!d.deleted).sort((a,b)=>(a.num||0)-(b.num||0));
+  const q=(searchTerm||'').trim().toLowerCase();
+  let lastPhase='__init__';
   plan.forEach(d=>{
     if(activeFilter!=='all' && activeFilter!==d.phase) return;
+    if(q && !dayMatches(d,q)) return;
+    if(activeFilter==='all' && !q && d.phase!==lastPhase){ lastPhase=d.phase; dayWrap.appendChild(chapterHeader(d.phase)); }
     const ph=PHASES[d.phase]; const col=ph?ph.color:'#7a8aa0';
     const div=document.createElement('div');
-    div.id='day-'+d.num;div.className='day'+(d.num===todayNum()?' today':'');
+    div.id='day-'+d.num;div.className='day'+(d.num===todayNum()?' today':'')+(collapsed.has(d.id)?' collapsed':'');
 
     // Kopfzeile: Tag-Nr (sortiert), Datum, Phase, Karte, Löschen
     const head=document.createElement('div');head.className='dhead2';
     const left=document.createElement('div');left.className='dhead-left';
+    const chev=document.createElement('button');chev.type='button';chev.className='chev';chev.innerHTML=svgIcon('chevron');chev.title='Tag ein-/ausklappen';
+    chev.onclick=()=>{ if(collapsed.has(d.id))collapsed.delete(d.id); else collapsed.add(d.id); saveCollapsed(); div.classList.toggle('collapsed'); };
+    left.appendChild(chev);
     if(d.num===todayNum()){const tb=document.createElement('span');tb.className='todaybadge';tb.textContent='📍 Heute';left.appendChild(tb);}
     const pdot=document.createElement('span');pdot.className='phasedot';pdot.style.background=col;pdot.title=ph?ph.name:'';left.appendChild(pdot);
     const numWrap=document.createElement('span');numWrap.className='dnum';
@@ -969,20 +1062,24 @@ function renderDays(){
     left.appendChild(sel);
     head.appendChild(left);
     const ctrls=document.createElement('div');ctrls.className='dctrls';
-    const mapB=document.createElement('button');mapB.className='mapbtn';mapB.textContent='🗺 Auf Karte';
+    const mapB=document.createElement('button');mapB.type='button';mapB.className='mapbtn';mapB.innerHTML=svgIcon('pin')+' Karte';mapB.title='Auf Karte zeigen';
     mapB.onclick=()=>focusDay(d.num);ctrls.appendChild(mapB);
-    const delB=document.createElement('button');delB.className='delday';delB.textContent='✕ Tag';delB.title='Diesen Tag löschen';
+    const delB=document.createElement('button');delB.type='button';delB.className='delday';delB.innerHTML=svgIcon('x')+' Tag';delB.title='Diesen Tag löschen';
     delB.onclick=()=>{ if(confirm('Tag '+d.num+(d.title?' („'+d.title+'")':'')+' mit allen Einträgen wirklich löschen?')){d.deleted=true;d.ts=now();save();renderDays();} };
     ctrls.appendChild(delB);head.appendChild(ctrls);
     div.appendChild(head);
 
-    // Titel, Distanz, Beschreibung (editierbar)
+    // Titel (immer sichtbar, auch eingeklappt)
     div.appendChild(mkEditable(d.title,'droute-ed',v=>{d.title=v;d.ts=now();save();},'Titel des Tages…'));
+    // einklappbarer Körper
+    const body=document.createElement('div');body.className='daybody';
+    const inner=document.createElement('div');inner.className='daybody-inner';
+    body.appendChild(inner);div.appendChild(body);
     const meta=document.createElement('div');meta.className='dmeta-ed';
     meta.appendChild(document.createTextNode('📍 '));
     meta.appendChild(mkEditable(d.dist,'ddist-ed',v=>{d.dist=v;d.ts=now();save();},'Distanz / Fahrzeit'));
-    div.appendChild(meta);
-    div.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
+    inner.appendChild(meta);
+    inner.appendChild(mkEditable(d.desc,'ddesc-ed',v=>{d.desc=v;d.ts=now();save();},'Notiz / Beschreibung…'));
 
     // Start & Ende des Tages – einfach den Ort eintragen
     const locLine=document.createElement('div');locLine.className='locline';
@@ -991,7 +1088,7 @@ function renderDays(){
     const arrow=document.createElement('span');arrow.className='locarrow';arrow.textContent='→';locLine.appendChild(arrow);
     locLine.appendChild(document.createTextNode('🏁 Ende: '));
     locLine.appendChild(mkEditable(d.endTxt,'locname-ed',v=>{d.endTxt=v;d.ts=now();save();},'Zielort…'));
-    div.appendChild(locLine);
+    inner.appendChild(locLine);
 
     // === Einträge & Unterpunkte (Ziehgriff zum Sortieren) ===
     const ul=document.createElement('ul');ul.className='items';
@@ -1008,7 +1105,7 @@ function renderDays(){
       subB.onclick=()=>{const ns={id:uid(),ts:now(),text:'',author:ME,done:false};it.subs.push(ns);it.ts=now();save();renderDays();
         setTimeout(()=>{const e=document.getElementById('sub-'+ns.id);e&&e.focus();},0);};
       li.appendChild(subB);
-      const del=document.createElement('button');del.type='button';del.className='del';del.textContent='✕';del.title='Eintrag entfernen';
+      const del=document.createElement('button');del.type='button';del.className='del';del.innerHTML=svgIcon('x');del.title='Eintrag entfernen';
       del.onclick=()=>{ it.deleted=true;it.ts=now();save();renderDays(); };
       li.appendChild(del);
       ul.appendChild(li);
@@ -1021,13 +1118,13 @@ function renderDays(){
         const stxt=mkEditable(su.text,'txt-ed',v=>{su.text=v;su.ts=now();save();},'Unterpunkt…');
         stxt.id='sub-'+su.id;sli.appendChild(stxt);
         sli.appendChild(badgeEl(su.author));
-        const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.textContent='✕';sdel.title='Unterpunkt entfernen';
+        const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.innerHTML=svgIcon('x');sdel.title='Unterpunkt entfernen';
         sdel.onclick=()=>{ su.deleted=true;su.ts=now();save();renderDays(); };
         sli.appendChild(sdel);
         ul.appendChild(sli);
       });
     });
-    div.appendChild(ul);
+    inner.appendChild(ul);
 
     // Eintrag hinzufügen
     const add=document.createElement('div');add.className='additem';
@@ -1037,7 +1134,7 @@ function renderDays(){
       d.items.push({id:uid(),ts:now(),text:v,author:ME,done:false,subs:[]});save();renderDays();
       setTimeout(()=>{const el=document.getElementById('day-'+d.num);if(el){const i=el.querySelector('.additem input');i&&i.focus();}},0);};
     btn.onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go();};
-    add.appendChild(inp);add.appendChild(btn);div.appendChild(add);
+    add.appendChild(inp);add.appendChild(btn);inner.appendChild(add);
 
     // 🏕 Übernachtung / Camping (mehrere Optionen, Preis, Link, Bewertung)
     const stayBox=document.createElement('div');stayBox.className='staybox';
@@ -1051,14 +1148,14 @@ function renderDays(){
       r1.appendChild(mkEditable(s.price,'stayprice',v=>{s.price=v;s.ts=now();save();renderDays();},'Gesamtpreis €'));
       const pn=parseFloat(String(s.price||'').replace(',','.').replace(/[^\d.]/g,''));
       if(!isNaN(pn)&&pn>0){ const pp=document.createElement('span');pp.className='perperson';pp.textContent='≈ '+(pn/TRIO.length).toFixed(2)+' €/Person';r1.appendChild(pp); }
-      const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.textContent='✕';sdel.title='Option entfernen';
+      const sdel=document.createElement('button');sdel.type='button';sdel.className='del';sdel.innerHTML=svgIcon('x');sdel.title='Option entfernen';
       sdel.onclick=()=>{ s.deleted=true;s.ts=now();save();renderDays(); };
       r1.appendChild(sdel);card.appendChild(r1);
       const r2=document.createElement('div');r2.className='stayrow';
       const linkIn=document.createElement('input');linkIn.type='text';linkIn.className='staylink';linkIn.value=s.url||'';linkIn.placeholder='Link (https://…)';
       linkIn.onchange=()=>{s.url=linkIn.value.trim();s.ts=now();save();renderDays();};
       r2.appendChild(linkIn);
-      const open=document.createElement('button');open.type='button';open.className='locbtn';open.textContent='↗ Öffnen';
+      const open=document.createElement('button');open.type='button';open.className='locbtn';open.innerHTML=svgIcon('ext')+' Öffnen';
       open.onclick=()=>{let u=(s.url||'').trim();if(!u)return;if(!/^https?:\/\//i.test(u))u='https://'+u;window.open(u,'_blank','noopener');};
       r2.appendChild(open);
       const noteIn=document.createElement('input');noteIn.type='text';noteIn.className='staynote';noteIn.value=s.notes||'';noteIn.placeholder='📝 Notiz / Anmerkung…';
@@ -1093,10 +1190,11 @@ function renderDays(){
       setTimeout(()=>{const el=document.getElementById('day-'+d.num);if(el){const i=el.querySelector('.staybox .additem input');i&&i.focus();}},0);};
     sBtn.onclick=addStay;sInp.onkeydown=e=>{if(e.key==='Enter')addStay();};
     addS.appendChild(sInp);addS.appendChild(sBtn);stayBox.appendChild(addS);
-    div.appendChild(stayBox);
+    inner.appendChild(stayBox);
 
     dayWrap.appendChild(div);
   });
+  renderTimeline(); renderOverview();
   renderMap();
   updateStats();
 }
@@ -1120,7 +1218,7 @@ function renderPack(){
     li.appendChild(cb);
     li.appendChild(mkEditable(it.text,'txt-ed',v=>{it.text=v;it.ts=now();save();},'Eintrag…'));
     li.appendChild(badgeEl(it.author));
-    const del=document.createElement('button');del.type='button';del.className='del';del.textContent='✕';del.title='Eintrag entfernen';
+    const del=document.createElement('button');del.type='button';del.className='del';del.innerHTML=svgIcon('x');del.title='Eintrag entfernen';
     del.onclick=()=>{ it.deleted=true;it.ts=now();save();renderPack(); };
     li.appendChild(del);
     packUl.appendChild(li);
@@ -1150,7 +1248,7 @@ function renderBudget(){
     amt.onchange=()=>{e.amount=parseFloat(amt.value)||0;e.ts=now();save();renderBudget();};
     r1.appendChild(amt);
     const eur=document.createElement('span');eur.className='expeur';eur.textContent='€';r1.appendChild(eur);
-    const del=document.createElement('button');del.type='button';del.className='del';del.textContent='✕';del.title='Ausgabe entfernen';
+    const del=document.createElement('button');del.type='button';del.className='del';del.innerHTML=svgIcon('x');del.title='Ausgabe entfernen';
     del.onclick=()=>{ e.deleted=true;e.ts=now();save();renderBudget(); };
     r1.appendChild(del);
     card.appendChild(r1);
@@ -1214,6 +1312,7 @@ function renderBudget(){
       return s.from+' → '+s.to+': '+a;
     }).join('<br>'); }
   sum.appendChild(set);
+  renderOverview();
 }
 function addExpense(){
   const desc=document.getElementById('expDesc'), amt=document.getElementById('expAmt'), payer=document.getElementById('expPayer');
@@ -1305,6 +1404,7 @@ function toggleTheme(){ const t=document.body.classList.contains('light')?'dark'
 applyTheme(localStorage.getItem('nordkap_theme')||'dark');
 
 // ---------- Init ----------
+{ const si=document.getElementById('searchic'); if(si) si.innerHTML=svgIcon('search'); }
 renderDays();
 renderPack();
 renderBudget();
