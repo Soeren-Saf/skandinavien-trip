@@ -234,6 +234,8 @@
   .ddesc-ed{display:block;color:var(--muted);font-size:.9rem;margin:4px 0 10px;border-radius:6px;padding:2px 4px;cursor:text}
   .ddate-ed:focus,.droute-ed:focus,.ddist-ed:focus,.ddesc-ed:focus,.txt-ed:focus{background:rgba(79,209,197,.10);box-shadow:0 0 0 1px var(--accent)}
   [data-ph]:empty:before{content:attr(data-ph);color:#5d6f82;font-weight:400}
+  a.inlink{color:var(--accentText);text-decoration:underline;text-underline-offset:2px;word-break:break-all;cursor:pointer}
+  a.inlink:hover{opacity:.8}
   .txt-ed{flex:1;font-size:.92rem;word-break:break-word;cursor:text;border-radius:4px;padding:0 3px}
   .item.checked .txt-ed{text-decoration:line-through;opacity:.5}
   .subbtn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;
@@ -363,6 +365,7 @@
     <a href="#sec-plan">🗺 Tagesplaner</a>
     <a href="#sec-pack">🎒 Packliste</a>
     <a href="#sec-budget">💶 Budget</a>
+    <a href="#sec-notes">📝 Notizen</a>
   </nav>
   <div id="map"></div>
 
@@ -417,12 +420,22 @@
       <button onclick="addExpense()">+ Ausgabe</button>
     </div>
   </div>
+
+  <h2 class="section-h" id="sec-notes">📝 Tipps & Notizen</h2>
+  <div class="section-sub">Gemeinsame Pinnwand für Tipps, Ideen und Erinnerungen. Links lassen sich direkt anklicken.</div>
+  <div class="pack-card">
+    <ul class="items" id="notelist"></ul>
+    <div class="additem">
+      <input type="text" id="noteinput" placeholder="Tipp oder Notiz hinzufügen…" onkeydown="if(event.key==='Enter')addNote()">
+      <button onclick="addNote()">+ Hinzufügen</button>
+    </div>
+  </div>
 </div>
 
 <footer>
   Tipp: Damit alle drei beitragen, kann jeder seine Ergänzungen „⬇ Exportieren" und die Datei den anderen schicken — die per „⬆ Importieren" zusammenführen.<br>
   Distanzen/Zeiten sind Richtwerte – vor Ort flexibel bleiben.<br>
-  <span style="opacity:.6">App-Version 22</span>
+  <span style="opacity:.6">App-Version 23</span>
 </footer>
 
 <script>
@@ -622,6 +635,7 @@ state.plan.forEach(d=>{ if(d.ts==null)d.ts=1; d.items=d.items||[]; d.stays=d.sta
   d.items.forEach(it=>{ if(it.ts==null)it.ts=1; it.subs=it.subs||[]; }); });
 state.pack.forEach(p=>{ if(p.ts==null)p.ts=1; });
 state.expenses=state.expenses||[]; state.expenses.forEach(x=>{ if(x.ts==null)x.ts=1; if(!x.parts||!x.parts.length) x.parts=['Sören','Flo','Sarah']; });
+state.notes=state.notes||[]; state.notes.forEach(x=>{ if(x.ts==null)x.ts=1; });
 
 // ---------- Merge (mehrere Geräte zusammenführen, neuere Änderung gewinnt) ----------
 function newer(a,b){ return (a.ts||0)>=(b.ts||0)?a:b; }
@@ -649,14 +663,15 @@ function mergeState(a,b){
     titleTs:Math.max(a.titleTs||0,b.titleTs||0),
     plan:mergeArr(a.plan,b.plan,mergeDay),
     pack:mergeArr(a.pack,b.pack,mergePack),
-    expenses:mergeArr(a.expenses||[],b.expenses||[],newer)
+    expenses:mergeArr(a.expenses||[],b.expenses||[],newer),
+    notes:mergeArr(a.notes||[],b.notes||[],newer)
   };
 }
 
 // ---------- Live-Sync (Google Apps Script Web-App) ----------
 let syncing=false, syncTimer=null, pollStarted=false;
 let dragCtx=null, dragging=false;   // für Drag & Drop-Sortierung
-function syncedPart(){ return {title:state.title,titleTs:state.titleTs,plan:state.plan,pack:state.pack,expenses:state.expenses}; }
+function syncedPart(){ return {title:state.title,titleTs:state.titleTs,plan:state.plan,pack:state.pack,expenses:state.expenses,notes:state.notes}; }
 function scheduleSync(){ if(!API)return; clearTimeout(syncTimer); syncTimer=setTimeout(syncNow,900); }
 function isEditing(){ const a=document.activeElement; return !!(a && (a.isContentEditable || a.tagName==='INPUT')); }
 async function syncNow(){
@@ -668,10 +683,10 @@ async function syncNow(){
     if(t && t!=='null') remote=JSON.parse(t);
     if(isEditing()){ setSyncStatus('ok'); syncing=false; return; } // während des Tippens nichts ersetzen
     const merged = remote ? mergeState(syncedPart(),remote) : syncedPart();
-    state.title=merged.title; state.titleTs=merged.titleTs; state.plan=merged.plan; state.pack=merged.pack; state.expenses=merged.expenses||[];
+    state.title=merged.title; state.titleTs=merged.titleTs; state.plan=merged.plan; state.pack=merged.pack; state.expenses=merged.expenses||[]; state.notes=merged.notes||[];
     saveLocal();
     if(JSON.stringify(merged)!==JSON.stringify(remote)) await fetch(API,{method:'POST',body:JSON.stringify(merged)});
-    paintTitle(); renderDays(); renderPack(); renderBudget();
+    paintTitle(); renderDays(); renderPack(); renderBudget(); renderNotes();
     setSyncStatus('ok');
   }catch(e){ setSyncStatus('off'); }
   syncing=false;
@@ -970,12 +985,37 @@ function attachDnD(li, arr, el, redraw){
   h.addEventListener('pointerup',endDrag); h.addEventListener('pointercancel',endDrag);
   return h;
 }
+function linkifyHTML(s){
+  return escapeHtml(s).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}'"])/gi,
+    u=>'<a class="inlink" href="'+u+'" target="_blank" rel="noopener noreferrer">'+u+'</a>');
+}
 function mkEditable(text,cls,onSave,ph){
   const el=document.createElement('span');
-  el.className=cls;el.contentEditable="true";el.spellcheck=false;el.textContent=text||'';
-  if(ph)el.setAttribute('data-ph',ph);
-  el.addEventListener('blur',()=>onSave(el.textContent.trim()));
-  el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el.blur();}});
+  el.className=cls; el.spellcheck=false; el.tabIndex=0; if(ph)el.setAttribute('data-ph',ph);
+  el._val=text||'';
+  function show(){
+    el.contentEditable='false'; el.classList.remove('editing');
+    if(el._val.trim()) el.innerHTML=linkifyHTML(el._val); else el.textContent='';
+  }
+  function startEdit(){
+    if(el.contentEditable==='true') return;
+    el.contentEditable='true'; el.classList.add('editing'); el.textContent=el._val;
+    el.focus();
+    try{ const r=document.createRange();r.selectNodeContents(el);r.collapse(false);
+      const s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}
+  }
+  show();
+  // Klick auf einen Link öffnet ihn; Klick auf normalen Text startet das Bearbeiten.
+  el.addEventListener('mousedown',e=>{
+    if(el.contentEditable==='true') return;
+    if(e.target.closest('a')) return;   // Link anklicken erlauben
+    e.preventDefault(); startEdit();
+  });
+  el.addEventListener('focus',()=>{ if(el.contentEditable!=='true') startEdit(); });
+  el.addEventListener('blur',()=>{
+    el._val=el.textContent.trim(); onSave(el._val); show();
+  });
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();el.blur();} });
   return el;
 }
 // --- Linien-Icons (Inline-SVG, themenfähig über currentColor) ---
@@ -1230,6 +1270,28 @@ function addPack(){
   inp.value='';save();renderPack();inp.focus();
 }
 
+// ---------- Tipps & Notizen ----------
+const noteUl=document.getElementById('notelist');
+function renderNotes(){
+  if(!noteUl)return;
+  noteUl.innerHTML='';
+  state.notes.filter(it=>!it.deleted).forEach(it=>{
+    const li=document.createElement('li');li.className='item';
+    li.appendChild(attachDnD(li, state.notes, it, renderNotes));
+    li.appendChild(mkEditable(it.text,'txt-ed',v=>{it.text=v;it.ts=now();save();},'Tipp oder Notiz…'));
+    li.appendChild(badgeEl(it.author));
+    const del=document.createElement('button');del.type='button';del.className='del';del.innerHTML=svgIcon('x');del.title='Notiz entfernen';
+    del.onclick=()=>{ it.deleted=true;it.ts=now();save();renderNotes(); };
+    li.appendChild(del);
+    noteUl.appendChild(li);
+  });
+}
+function addNote(){
+  const inp=document.getElementById('noteinput');const v=inp.value.trim();if(!v)return;
+  state.notes.push({id:uid(),ts:now(),text:v,author:ME});
+  inp.value='';save();renderNotes();inp.focus();
+}
+
 // ---------- Budget & Kostenteilung ----------
 const TRIO=['Sören','Flo','Sarah'];
 let budgetFocus=null;
@@ -1380,9 +1442,9 @@ function importData(input){
   const r=new FileReader();
   r.onload=()=>{try{
     const inc=JSON.parse(r.result);
-    const m=mergeState(syncedPart(),{title:inc.title||state.title,titleTs:inc.titleTs||1,plan:inc.plan||[],pack:inc.pack||[],expenses:inc.expenses||[]});
-    state.title=m.title;state.titleTs=m.titleTs;state.plan=m.plan;state.pack=m.pack;state.expenses=m.expenses||[];
-    save();paintTitle();renderDays();renderPack();renderBudget();
+    const m=mergeState(syncedPart(),{title:inc.title||state.title,titleTs:inc.titleTs||1,plan:inc.plan||[],pack:inc.pack||[],expenses:inc.expenses||[],notes:inc.notes||[]});
+    state.title=m.title;state.titleTs=m.titleTs;state.plan=m.plan;state.pack=m.pack;state.expenses=m.expenses||[];state.notes=m.notes||[];
+    save();paintTitle();renderDays();renderPack();renderBudget();renderNotes();
     alert('Listen erfolgreich zusammengeführt ✓');
   }catch(err){alert('Datei konnte nicht gelesen werden.');}
   input.value='';};
@@ -1408,6 +1470,7 @@ applyTheme(localStorage.getItem('nordkap_theme')||'dark');
 renderDays();
 renderPack();
 renderBudget();
+renderNotes();
 paintSyncUI();
 if(API){ syncNow(); ensurePoll(); }
 fetchRealRoute();   // echte Strecke laden (falls online)
